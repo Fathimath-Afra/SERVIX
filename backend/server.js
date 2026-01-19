@@ -4,7 +4,9 @@ const cors = require('cors');
 const authenticateUser = require('./app/Middlewares/authenticate_user');
 const authorizeUser = require('./app/Middlewares/authorize_user');
 const userCltr = require('./app/Controllers/userController');
-const societyCltr = require('./app/Controllers/societyController')
+const societyCltr = require('./app/Controllers/societyController');
+const issueCltr = require('./app/Controllers/issueController');
+const { upload } = require('./config/cloudinary');
 
 
 const express =require('express');
@@ -22,7 +24,7 @@ app.post('/api/login',userCltr.login);
 
 
 app.post('/api/societies', authenticateUser, authorizeUser(['admin']), societyCltr.create);
-app.get('/api/societies', societyCltr.list); // Everyone needs to see societies to register
+app.get('/api/societies', societyCltr.list); 
 
 app.post('/api/admin/create-manager', authenticateUser, authorizeUser(['admin']), userCltr.createManager);
 app.get('/api/admin/managers', authenticateUser, authorizeUser(['admin']), userCltr.listManagers);
@@ -31,6 +33,7 @@ app.get('/api/admin/managers', authenticateUser, authorizeUser(['admin']), userC
 app.post('/api/manager/create-worker', authenticateUser, authorizeUser(['manager']), userCltr.createWorker);
 app.get('/api/manager/workers', authenticateUser, authorizeUser(['manager']), userCltr.listWorkersBySociety);
 
+app.post('/api/citizen/report-issue', authenticateUser,authorizeUser(['citizen']),upload.array('images', 3), issueCltr.reportIssue );
 
 app.listen(port,() =>{
     console.log('server is running on port ',port);

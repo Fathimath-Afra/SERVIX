@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import AdminSocieties from './pages/AdminSocieties';
 import AdminManagers from './pages/AdminManagers';
 import ManagerWorkers from './pages/ManagerWorkers';
+import ReportIssue from './pages/ReportIssue';
 import Register from './pages/Register';
 import Navbar from './components/Navbar';
 
@@ -53,6 +54,12 @@ function App() {
             <Route path="/manager/workers" element={
               <ProtectedRoute allowedRoles={['manager']}>
                   <ManagerWorkers />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/citizen/report-issue" element={
+              <ProtectedRoute allowedRoles={['citizen']}>
+                  <ReportIssue />
               </ProtectedRoute>
             } />
         </Routes>

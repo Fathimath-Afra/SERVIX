@@ -1,39 +1,41 @@
-import { createContext, useState, useEffect } from 'react';
+import { createContext, useReducer, useEffect } from 'react';
+import { authReducer, initialState } from '../reducers/AuthReducer';
 import { jwtDecode } from 'jwt-decode';
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [state, dispatch] = useReducer(authReducer, initialState);
 
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
             try {
                 const decoded = jwtDecode(token);
-                setUser(decoded);
+                dispatch({ type: 'LOGIN_SUCCESS', payload: decoded });
             } catch (err) {
                 localStorage.removeItem('token');
+                dispatch({ type: 'LOGOUT' });
             }
+        } else {
+            dispatch({ type: 'STOP_LOADING' });
         }
-        setLoading(false);
     }, []);
 
     const login = (token) => {
         localStorage.setItem('token', token);
         const decoded = jwtDecode(token);
-        setUser(decoded);
+        dispatch({ type: 'LOGIN_SUCCESS', payload: decoded });
     };
 
     const logout = () => {
         localStorage.removeItem('token');
-        setUser(null);
+        dispatch({ type: 'LOGOUT' });
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, loading }}>
-            {!loading && children}
+        <AuthContext.Provider value={{ ...state, login, logout }}>
+            {children}
         </AuthContext.Provider>
     );
 };

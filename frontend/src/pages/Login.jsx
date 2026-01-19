@@ -1,6 +1,7 @@
 import { useState, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { jwtDecode } from "jwt-decode";
 import API from '../api/axios';
 
 const Login = () => {
@@ -12,9 +13,18 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const { data } = await API.post('/login', { email, password });
-            login(data.token);
-            navigate('/dashboard'); 
+            const response = await API.post('/login', { email, password });
+            const token = response.data.token;
+            login(token);
+            const decoded = jwtDecode(token);
+        
+            if (decoded.role === 'admin') {
+                navigate('/admin/societies');
+            } else if (decoded.role === 'manager') {
+                navigate('/manager/workers');
+            } else {
+                navigate('/dashboard'); // For Citizens and Workers
+            } 
         } catch (err) {
             console.error(err);
             alert(err.response?.data?.error || "Login failed. Check backend console.");

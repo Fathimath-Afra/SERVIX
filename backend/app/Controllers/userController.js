@@ -38,7 +38,8 @@ userCltr.register = async (req, res) => {
       name: value.name,
       email: value.email,
       password: hashedPassword,
-      role: role
+      role: role,
+      societyId: value.societyId || null
     });
 
     await user.save();
@@ -86,7 +87,7 @@ userCltr.login = async (req, res) => {
     const tokenData = {
       userId: user._id,
       role: user.role,
-      societyId: user.societyId || null
+      societyId: user.societyId
     };
 
     const token = jwt.sign(tokenData, process.env.JWT_SECRET, {
@@ -95,7 +96,7 @@ userCltr.login = async (req, res) => {
 
     res.json({ token });
   } catch (err) {
-    console.error(err);
+    console.error(err.message);
     res.status(500).json({ error: "Server error" });
   }
 };

@@ -14,13 +14,19 @@ const issueSchema = new mongoose.Schema(
 
     category: {
       type: String,
-      enum: ["water", "electricity", "waste", "other"],
+      enum: ["water", "electricity", "waste", "plumbing","other"],
       required: true
     },
 
     images: {
-      type: [String],      // array of image URLs
+      type: [String],     
       default: []
+    },
+
+    location: {
+    lat: { type: Number },
+    lng: { type: Number }
+
     },
 
     status: {
