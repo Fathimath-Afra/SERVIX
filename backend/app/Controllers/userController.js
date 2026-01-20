@@ -188,17 +188,20 @@ userCltr.createWorker = async (req,res) =>{
 }
 
 
-userCltr.listWorkersBySociety = async (req,res) => {
-    try{
-      const workers = await User.find({
-        role: 'worker',
-        societyId : req.societyId
-      }).select('-password');
-      res.json(workers);
-
-    }catch(err){
-      res.status(500).json({error :"error fetching workers"});
+userCltr.listWorkersBySociety = async (req, res) => {
+    try {
+        const workers = await User.find({ 
+            role: 'worker', 
+            $or: [
+                { societyId: req.societyId }, // own staff
+                { societyId: null }          // Global freelancers/External vendors
+            ]
+        }).select('-password');
+        
+        res.json(workers); 
+    } catch (err) {
+        res.status(500).json({ error: "Error fetching workers" });
     }
-}
+};
 
 module.exports = userCltr;
