@@ -37,4 +37,41 @@ issueCltr.reportIssue = async (req, res) => {
     }
 };
 
+
+issueCltr.listBySociety = async (req, res) => {
+    try {
+        // Findind all issues where societyId matches the manager's society
+        const issues = await Issue.find({ societyId: req.societyId })
+            .populate('createdBy', 'name') 
+            .sort({ createdAt: -1 });
+        res.json(issues);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to fetch issues" });
+    }
+};
+
+
+issueCltr.assignWorker = async (req, res) => {
+    try {
+        const { issueId, workerId } = req.body;
+
+        const issue = await Issue.findOneAndUpdate(
+            { _id: issueId, societyId: req.societyId }, 
+            { 
+                assignedTo: workerId, 
+                status: 'in-progress' 
+            },
+            { new: true }
+        ).populate('assignedTo', 'name');
+
+        if (!issue) {
+            return res.status(404).json({ error: "Issue not found or unauthorized" });
+        }
+
+        res.json({ message: "Worker assigned successfully", issue });
+    } catch (err) {
+        res.status(500).json({ error: "Assignment failed" });
+    }
+};
+
 module.exports = issueCltr;

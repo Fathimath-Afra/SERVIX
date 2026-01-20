@@ -9,6 +9,7 @@ import ManagerWorkers from './pages/ManagerWorkers';
 import ReportIssue from './pages/ReportIssue';
 import Register from './pages/Register';
 import Navbar from './components/Navbar';
+import ManagerDashboard from './pages/ManagerDashboard';
 
 
 const Dashboard = () => {
@@ -62,6 +63,13 @@ function App() {
                   <ReportIssue />
               </ProtectedRoute>
             } />
+
+            <Route path="/manager/dashboard" element={
+              <ProtectedRoute allowedRoles={['manager']}>
+                  <ManagerDashboard />
+              </ProtectedRoute>
+            } />
+
         </Routes>
       </Router>
     </AuthProvider>

@@ -34,6 +34,8 @@ app.post('/api/manager/create-worker', authenticateUser, authorizeUser(['manager
 app.get('/api/manager/workers', authenticateUser, authorizeUser(['manager']), userCltr.listWorkersBySociety);
 
 app.post('/api/citizen/report-issue', authenticateUser,authorizeUser(['citizen']),upload.array('images', 3), issueCltr.reportIssue );
+app.get('/api/issues/society', authenticateUser, authorizeUser(['manager']), issueCltr.listBySociety);
+app.put('/api/issues/assign-worker', authenticateUser, authorizeUser(['manager']), issueCltr.assignWorker);
 
 app.listen(port,() =>{
     console.log('server is running on port ',port);
