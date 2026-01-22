@@ -26,6 +26,34 @@ export const assignWorkerAction = createAsyncThunk(
   }
 );
 
+// Thunk to fetch tasks for workers
+export const fetchWorkerTasks = createAsyncThunk(
+  'issues/fetchWorkerTasks',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await API.get('/issues/my-tasks');
+      return response.data;
+    } catch (err) {
+      return rejectWithValue(err.response.data);
+    }
+  }
+);
+
+// Thunk to update status
+export const updateIssueStatus = createAsyncThunk(
+  'issues/updateStatus',
+  async ({ id, status }, { rejectWithValue }) => {
+    try {
+      const response = await API.patch(`/issues/${id}/status`, { status });
+      return response.data.issue;
+    } catch (err) {
+      return rejectWithValue(err.response.data);
+    }
+  }
+);
+
+
+
 const issueSlice = createSlice({
   name: 'issues',
   initialState: {
@@ -54,6 +82,14 @@ const issueSlice = createSlice({
         if (index !== -1) {
             state.items[index] = action.payload; // Update the specific issue in the list
         }
+      })
+     
+      .addCase(fetchWorkerTasks.fulfilled, (state, action) => {
+        state.items = action.payload;
+      })
+      .addCase(updateIssueStatus.fulfilled, (state, action) => {
+        const index = state.items.findIndex(i => i._id === action.payload._id);
+        if (index !== -1) state.items[index] = action.payload;
       });
   },
 });
