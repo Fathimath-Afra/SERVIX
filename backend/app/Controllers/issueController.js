@@ -140,4 +140,17 @@ issueCltr.updateStatus = async (req, res) => {
     }
 };
 
+
+// issues reported by the logged-in citizen
+issueCltr.listByCitizen = async (req, res) => {
+    try {
+        const issues = await Issue.find({ createdBy: req.userId })
+            .populate('assignedTo', 'name') 
+            .sort({ createdAt: -1 });
+        res.json(issues);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to fetch your issues" });
+    }
+};
+
 module.exports = issueCltr;
