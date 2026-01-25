@@ -22,6 +22,8 @@ const Login = () => {
                 navigate('/admin/societies');
             } else if (decoded.role === 'manager') {
                 navigate('/manager/workers');
+            }  else if (decoded.role === 'worker') {
+                navigate('/worker/dashboard'); 
             } else {
                 navigate('/dashboard'); // For Citizens and Workers
             } 

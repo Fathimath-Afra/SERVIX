@@ -35,7 +35,12 @@ const userSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Society",
       default: null
-    }
+    },
+
+    walletBalance: { 
+      type: Number, 
+      default: 0 
+    } 
   },
   { timestamps: true }
 );

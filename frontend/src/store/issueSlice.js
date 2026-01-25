@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import API from '../api/axios';
 
-// 1. Async Thunk to fetch issues
+
 export const fetchSocietyIssues = createAsyncThunk(
   'issues/fetchSocietyIssues',
   async (_, { rejectWithValue }) => {
@@ -53,6 +53,20 @@ export const updateIssueStatus = createAsyncThunk(
 );
 
 
+//to fetch citizen's own issue
+export const fetchCitizenIssues = createAsyncThunk(
+  'issues/fetchCitizenIssues',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await API.get('/issues/my-reports');
+      return response.data;
+    } catch (err) {
+      return rejectWithValue(err.response.data);
+    }
+  }
+);
+
+
 
 const issueSlice = createSlice({
   name: 'issues',
@@ -87,9 +101,15 @@ const issueSlice = createSlice({
       .addCase(fetchWorkerTasks.fulfilled, (state, action) => {
         state.items = action.payload;
       })
+
       .addCase(updateIssueStatus.fulfilled, (state, action) => {
         const index = state.items.findIndex(i => i._id === action.payload._id);
         if (index !== -1) state.items[index] = action.payload;
+      })
+
+      .addCase(fetchCitizenIssues.fulfilled, (state, action) => {
+        state.items = action.payload;
+        state.loading = false;
       });
   },
 });

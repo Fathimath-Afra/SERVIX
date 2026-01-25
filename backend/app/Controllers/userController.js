@@ -101,6 +101,15 @@ userCltr.login = async (req, res) => {
   }
 };
 
+userCltr.getProfile = async (req, res) => {
+    try {
+        const user = await User.findById(req.userId).select('-password');
+        res.json(user);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to fetch profile" });
+    }
+};
+
 
 // admin creates manager
 userCltr.createManager = async (req, res) => {

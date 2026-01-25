@@ -110,6 +110,11 @@ issueCltr.updateStatus = async (req, res) => {
        
         if (status === 'resolved') {
             try {
+                const BASE_FEE = 700;
+                await User.findByIdAndUpdate(req.userId, {
+                $inc: { walletBalance: BASE_FEE }
+                });
+
                 const message = `
                     <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
                         <h2 style="color: #2563eb;">Issue Resolved!</h2>

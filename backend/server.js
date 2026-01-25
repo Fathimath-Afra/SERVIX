@@ -6,10 +6,12 @@ const authorizeUser = require('./app/Middlewares/authorize_user');
 const userCltr = require('./app/Controllers/userController');
 const societyCltr = require('./app/Controllers/societyController');
 const issueCltr = require('./app/Controllers/issueController');
+const reviewCltr = require('./app/Controllers/reviewController');
 const { upload } = require('./config/cloudinary');
 
 
 const express =require('express');
+const issue = require('./app/Models/issue');
 const app = express();
 const port = process.env.PORT || 5000;
 app.use(express.json());
@@ -21,6 +23,7 @@ configureDB();
 
 app.post('/api/register',userCltr.register);
 app.post('/api/login',userCltr.login);
+app.get('/api/users/profile',authenticateUser,userCltr.getProfile);
 
 
 app.post('/api/societies', authenticateUser, authorizeUser(['admin']), societyCltr.create);
@@ -36,6 +39,14 @@ app.get('/api/manager/workers', authenticateUser, authorizeUser(['manager']), us
 app.post('/api/citizen/report-issue', authenticateUser,authorizeUser(['citizen']),upload.array('images', 3), issueCltr.reportIssue );
 app.get('/api/issues/society', authenticateUser, authorizeUser(['manager']), issueCltr.listBySociety);
 app.put('/api/issues/assign-worker', authenticateUser, authorizeUser(['manager']), issueCltr.assignWorker);
+app.get('/api/issues/my-tasks',authenticateUser,authorizeUser(['worker']),issueCltr.listMyTasks);
+app.patch('/api/issues/:id/status', authenticateUser, authorizeUser(['worker']), issueCltr.updateStatus);
+app.get('/api/issues/my-reports', authenticateUser, authorizeUser(['citizen']), issueCltr.listByCitizen);
+
+
+app.post('/api/reviews', authenticateUser, authorizeUser(['citizen']), reviewCltr.create);
+
+
 
 app.listen(port,() =>{
     console.log('server is running on port ',port);

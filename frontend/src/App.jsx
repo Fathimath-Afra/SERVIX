@@ -10,6 +10,8 @@ import ReportIssue from './pages/ReportIssue';
 import Register from './pages/Register';
 import Navbar from './components/Navbar';
 import ManagerDashboard from './pages/ManagerDashboard';
+import WorkerDashboard from './pages/WorkerDashboard';
+import MyIssues from './pages/MyIssues';
 
 
 const Dashboard = () => {
@@ -67,6 +69,18 @@ function App() {
             <Route path="/manager/dashboard" element={
               <ProtectedRoute allowedRoles={['manager']}>
                   <ManagerDashboard />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/worker/dashboard" element={
+              <ProtectedRoute allowedRoles={['worker']}>
+                  <WorkerDashboard />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/citizen/my-issues" element={
+              <ProtectedRoute allowedRoles={['citizen']}>
+                  <MyIssues />
               </ProtectedRoute>
             } />
 
