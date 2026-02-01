@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchSocietyIssues, assignWorkerAction } from '../store/issueSlice';
+import { deleteConfirm, successAlert } from '../utils/alert';
 import API from '../api/axios';
 
 const ManagerDashboard = () => {
@@ -30,9 +31,10 @@ const ManagerDashboard = () => {
 
     const handleAssign = (issueId) => {
         const workerId = selections[issueId];
-        if (!workerId) return alert("Please select a worker");
+        if (!workerId) return Swal.fire("Oops", "Select a worker first", "info");
+
         dispatch(assignWorkerAction({ issueId, workerId }));
-        alert("Worker assigned!");
+        successAlert("Assigned!", "The worker has been notified.");
     };
 
     if (loading) return <div className="p-10 text-center">Loading...</div>;

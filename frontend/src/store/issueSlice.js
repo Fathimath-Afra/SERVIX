@@ -67,6 +67,31 @@ export const fetchCitizenIssues = createAsyncThunk(
 );
 
 
+export const deleteIssueAction = createAsyncThunk(
+    'issues/deleteIssue',
+    async (id, { rejectWithValue }) => {
+        try {
+            await API.delete(`/issue/${id}`);
+            return id;
+        } catch (err) {
+            return rejectWithValue(err.response.data);
+        }
+    }
+);
+
+
+export const updateIssueAction = createAsyncThunk(
+    'issues/updateIssue',
+    async ({ id, formData }, { rejectWithValue }) => {
+        try {
+            const response = await API.put(`/issue/${id}`, formData);
+            return response.data;
+        } catch (err) {
+            return rejectWithValue(err.response.data);
+        }
+    }
+);
+
 
 const issueSlice = createSlice({
   name: 'issues',
@@ -110,7 +135,16 @@ const issueSlice = createSlice({
       .addCase(fetchCitizenIssues.fulfilled, (state, action) => {
         state.items = action.payload;
         state.loading = false;
-      });
+      })
+
+      .addCase(deleteIssueAction.fulfilled, (state, action) => {
+        state.items = state.items.filter(item => item._id !== action.payload);
+      })
+      
+      .addCase(updateIssueAction.fulfilled, (state, action) => {
+        const index = state.items.findIndex(item => item._id === action.payload._id);
+        if (index !== -1) state.items[index] = action.payload;
+    });
   },
 });
 

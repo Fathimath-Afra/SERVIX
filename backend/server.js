@@ -24,10 +24,14 @@ configureDB();
 app.post('/api/register',userCltr.register);
 app.post('/api/login',userCltr.login);
 app.get('/api/users/profile',authenticateUser,userCltr.getProfile);
+app.delete('/api/:id', authenticateUser, userCltr.remove);
 
 
 app.post('/api/societies', authenticateUser, authorizeUser(['admin']), societyCltr.create);
-app.get('/api/societies', societyCltr.list); 
+app.get('/api/societies', societyCltr.list);
+// app.put('/api/societies/:id', authenticateUser, authorizeUser(['admin']), societyCltr.update);
+app.delete('/api/societies/:id', authenticateUser, authorizeUser(['admin']), societyCltr.remove);
+
 
 app.post('/api/admin/create-manager', authenticateUser, authorizeUser(['admin']), userCltr.createManager);
 app.get('/api/admin/managers', authenticateUser, authorizeUser(['admin']), userCltr.listManagers);
@@ -42,10 +46,11 @@ app.put('/api/issues/assign-worker', authenticateUser, authorizeUser(['manager']
 app.get('/api/issues/my-tasks',authenticateUser,authorizeUser(['worker']),issueCltr.listMyTasks);
 app.patch('/api/issues/:id/status', authenticateUser, authorizeUser(['worker']), issueCltr.updateStatus);
 app.get('/api/issues/my-reports', authenticateUser, authorizeUser(['citizen']), issueCltr.listByCitizen);
+app.put('/api/issue/:id',authenticateUser,authorizeUser(['citizen']),issueCltr.update);
+app.delete('/api/issue/:id',authenticateUser,authorizeUser(['citizen','admin']),userCltr.remove);
 
 
 app.post('/api/reviews', authenticateUser, authorizeUser(['citizen']), reviewCltr.create);
-
 
 
 app.listen(port,() =>{

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useGeolocation } from '../hooks/geolocation';
+import { deleteConfirm, successAlert } from '../utils/alert';
 import API from '../api/axios';
 
 const ReportIssue = () => {
@@ -30,10 +31,10 @@ const ReportIssue = () => {
             await API.post('/citizen/report-issue', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            alert("Issue Reported!");
+            successAlert("Reported!", "Your issue has been submitted to the manager.");
             setTitle(''); setDescription(''); setCategory('other'); setImages([]);
         } catch (err) {
-            alert("Submission failed");
+            Swal.fire("Failed", "Please try again later", "error");
         } finally {
             setLoading(false);
         }

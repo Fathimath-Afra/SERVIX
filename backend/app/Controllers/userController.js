@@ -213,4 +213,22 @@ userCltr.listWorkersBySociety = async (req, res) => {
     }
 };
 
+
+userCltr.remove = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        //  Managers can only delete workers in their  society
+        if (req.role === 'manager' && user.societyId.toString() !== req.societyId.toString()) {
+            return res.status(403).json({ error: "Unauthorized" });
+        }
+
+        await User.findByIdAndDelete(req.params.id);
+        res.json({ message: "User removed successfully" });
+    } catch (err) {
+        res.status(500).json({ error: "Delete failed" });
+    }
+};
+
 module.exports = userCltr;

@@ -6,4 +6,11 @@ const societyValidation = Joi.object({
   city: Joi.string().min(3).required(),
 });
 
-module.exports = societyValidation;
+
+const updateSocietyValidation = Joi.object({
+  name: Joi.string().min(3).optional(),
+  address: Joi.string().min(5).optional(),
+  city: Joi.string().min(3).optional(),
+}).min(1); 
+
+module.exports ={ societyValidation, updateSocietyValidation};

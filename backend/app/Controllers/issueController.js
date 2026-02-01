@@ -158,4 +158,29 @@ issueCltr.listByCitizen = async (req, res) => {
     }
 };
 
+
+issueCltr.remove = async (req, res) => {
+    try {
+        const issue = await Issue.findOneAndDelete({ _id: req.params.id, createdBy: req.userId });
+        if (!issue) return res.status(404).json({ error: "Issue not found or unauthorized" });
+        res.json({ message: "Issue removed" });
+    } catch (err) {
+        res.status(500).json({ error: "Delete failed" });
+    }
+};
+
+
+issueCltr.update = async (req, res) => {
+    try {
+        const issue = await Issue.findOneAndUpdate(
+            { _id: req.params.id, createdBy: req.userId },
+            req.body,
+            { new: true }
+        );
+        res.json(issue);
+    } catch (err) {
+        res.status(500).json({ error: "Update failed" });
+    }
+};
+
 module.exports = issueCltr;
