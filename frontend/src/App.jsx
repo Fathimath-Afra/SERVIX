@@ -2,89 +2,111 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import { useContext } from 'react';
 import ProtectedRoute from './components/ProtectedRoute';
+
 import Login from './pages/Login';
+import Register from './pages/Register';
+import LandingPage from './pages/LandingPage';
+import AdminDashboard from './pages/AdminDashboard';
 import AdminSocieties from './pages/AdminSocieties';
 import AdminManagers from './pages/AdminManagers';
+import ManagerDashboard from './pages/ManagerDashboard';
 import ManagerWorkers from './pages/ManagerWorkers';
 import ReportIssue from './pages/ReportIssue';
-import Register from './pages/Register';
-import Navbar from './components/Navbar';
-import ManagerDashboard from './pages/ManagerDashboard';
 import WorkerDashboard from './pages/WorkerDashboard';
 import MyIssues from './pages/MyIssues';
 
+import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 
-const Dashboard = () => {
-    const { user, logout } = useContext(AuthContext);
-    return (
-        <div className="p-10 text-center">
-            <h1 className="text-3xl font-bold">Dashboard</h1>
-            <p className="mt-2 text-gray-600">You are logged in as: <span className="text-blue-600 font-bold uppercase">{user?.role}</span></p>
-            <button 
-                onClick={logout} 
-                className="mt-6 bg-red-500 hover:bg-red-600 text-blue px-6 py-2 rounded-full font-bold transition-all"
-            >
-                Logout
-            </button>
-        </div>
-    );
+
+const DashboardRedirect = () => {
+    const { user } = useContext(AuthContext);
+    
+    if (user?.role === 'admin') return <Navigate to="/admin/dashboard" />;
+    if (user?.role === 'manager') return <Navigate to="/manager/dashboard" />;
+    if (user?.role === 'worker') return <Navigate to="/worker/dashboard" />;
+    if (user?.role === 'citizen') return <Navigate to="/citizen/my-issues" />;
+    
+    return <Navigate to="/login" />;
 };
 
 function App() {
   return (
     <AuthProvider>
       <Router>
-        <Navbar />
-        <Routes>
-          <Route path="/register" element={<Register />} />
-          <Route path="/login" element={<Login />} />
+       
+        <div className="flex flex-col min-h-screen">
+          <Navbar />
           
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/" element={<Navigate to="/login" />} />
+          <main className="flex-grow">
+            <Routes>
+              
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/login" element={<Login />} />
+              
+              {/* --- SHARED DASHBOARD ROUTE */}
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                    <DashboardRedirect />
+                </ProtectedRoute>
+              } />
 
-          <Route path="/admin/societies" element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                  <AdminSocieties />
-              </ProtectedRoute>
-            } />
+              
+              <Route path="/admin/dashboard" element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                      <AdminDashboard />
+                  </ProtectedRoute>
+              } />
+              <Route path="/admin/societies" element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                      <AdminSocieties />
+                  </ProtectedRoute>
+                } />
+              <Route path="/admin/managers" element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                      <AdminManagers />
+                  </ProtectedRoute>
+                }/>
 
-            <Route path="/admin/managers" element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                  <AdminManagers />
-              </ProtectedRoute>
-            }/>
+              {/* --- MANAGER ROUTES --- */}
+              <Route path="/manager/dashboard" element={
+                  <ProtectedRoute allowedRoles={['manager']}>
+                      <ManagerDashboard />
+                  </ProtectedRoute>
+                } />
+              <Route path="/manager/workers" element={
+                  <ProtectedRoute allowedRoles={['manager']}>
+                      <ManagerWorkers />
+                  </ProtectedRoute>
+                } />
 
-            <Route path="/manager/workers" element={
-              <ProtectedRoute allowedRoles={['manager']}>
-                  <ManagerWorkers />
-              </ProtectedRoute>
-            } />
+              {/* --- CITIZEN ROUTES --- */}
+              <Route path="/citizen/report-issue" element={
+                  <ProtectedRoute allowedRoles={['citizen']}>
+                      <ReportIssue />
+                  </ProtectedRoute>
+                } />
+              <Route path="/citizen/my-issues" element={
+                  <ProtectedRoute allowedRoles={['citizen']}>
+                      <MyIssues />
+                  </ProtectedRoute>
+                } />
 
-            <Route path="/citizen/report-issue" element={
-              <ProtectedRoute allowedRoles={['citizen']}>
-                  <ReportIssue />
-              </ProtectedRoute>
-            } />
+              {/* --- WORKER ROUTES --- */}
+              <Route path="/worker/dashboard" element={
+                  <ProtectedRoute allowedRoles={['worker']}>
+                      <WorkerDashboard />
+                  </ProtectedRoute>
+                } />
 
-            <Route path="/manager/dashboard" element={
-              <ProtectedRoute allowedRoles={['manager']}>
-                  <ManagerDashboard />
-              </ProtectedRoute>
-            } />
+             
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </main>
 
-            <Route path="/worker/dashboard" element={
-              <ProtectedRoute allowedRoles={['worker']}>
-                  <WorkerDashboard />
-              </ProtectedRoute>
-            } />
-
-            <Route path="/citizen/my-issues" element={
-              <ProtectedRoute allowedRoles={['citizen']}>
-                  <MyIssues />
-              </ProtectedRoute>
-            } />
-
-        </Routes>
+          <Footer />
+        </div>
       </Router>
     </AuthProvider>
   );

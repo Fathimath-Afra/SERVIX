@@ -1,107 +1,123 @@
-import { useEffect,useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchWorkerTasks, updateIssueStatus } from '../store/issueSlice';
+import MapOverview from '../components/MapOverview';
+import API from '../api/axios';
 
 const WorkerDashboard = () => {
     const dispatch = useDispatch();
     const { items: tasks, loading } = useSelector(state => state.issues);
     const [profile, setProfile] = useState(null);
-
-    const fetchFreshProfile = async () => {
-        try {
-            const { data } = await API.get('/users/profile');
-            setProfile(data);
-        } catch (err) {
-            console.error("Error fetching profile");
-        }
-    };
-
+    const [view, setView] = useState('active'); // 'active' and 'completed'
 
     useEffect(() => {
         dispatch(fetchWorkerTasks());
+        const fetchFreshProfile = async () => {
+            try {
+                const { data } = await API.get('/users/profile');
+                setProfile(data);
+            } catch (err) { console.error(err); }
+        };
+        fetchFreshProfile();
     }, [dispatch]);
 
-    const handleStatusUpdate = (id, currentStatus) => {
-        // console.log("Button Clicked for ID:", id); 
-        // console.log("Current Status:", currentStatus);
-        let nextStatus = "";
-        if (currentStatus === 'open') nextStatus = 'in-progress';
-        if (currentStatus === 'in-progress') nextStatus = 'resolved';
-
-        // console.log("Next Status will be:", nextStatus);
-        dispatch(updateIssueStatus({ id, status: nextStatus }));
+    const handleStatusUpdate = async (id, currentStatus) => {
+        // console.log(id , currentStatus);
+        let nextStatus = currentStatus === 'open' ? 'in-progress' : 'resolved';
+        await dispatch(updateIssueStatus({ id, status: nextStatus }));
         if (nextStatus === 'resolved') {
-            fetchFreshProfile();
+            
+            const { data } = await API.get('/users/profile');
+            setProfile(data);
         }
     };
 
-    if (loading) return <div className="p-10 text-center">Loading Tasks...</div>;
+    if (loading) return <div className="p-10 text-center uppercase text-[10px] font-black tracking-widest">Syncing Tasks...</div>;
+
+    // Filtered lists for the tabs
+    const activeTasks = tasks.filter(t => t.status !== 'resolved');
+    const completedTasks = tasks.filter(t => t.status === 'resolved');
 
     return (
+        <div className="max-w-7xl mx-auto p-6 font-sans">
+            
+            <h1 className="text-2xl font-black uppercase mb-6 border-b pb-2 tracking-tight">Worker Console</h1>
 
-        <div className="p-6 bg-gray-50 min-h-screen">
-            {/* WALLET CARD */}
-            <div className="max-w-4xl mx-auto mb-8">
-                <div className="bg-blue-600 rounded-3xl p-8 text-white shadow-xl flex justify-between items-center">
-                    <div>
-                        <p className="text-blue-100 font-semibold text-sm uppercase tracking-wider">My Earnings</p>
-                        <h1 className="text-5xl font-black mt-2">
-                            Rs.{profile?.walletBalance || 0}
-                        </h1>
-                        <p className="mt-4 text-xs opacity-80">
-                            Base Fee: Rs.700 per resolved task
-                        </p>
-                    </div>
-                    <div className="hidden md:block">
-                        <div className="bg-blue-500 p-4 rounded-2xl border border-blue-400">
-                            <p className="text-xs font-bold">Tasks Completed</p>
-                            <p className="text-2xl font-black">{tasks.filter(t => t.status === 'resolved').length}</p>
+            {/* --- TOP SECTION: MAP & STATS --- */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+                <div className="lg:col-span-2 border border-gray-200 h-[350px] overflow-hidden bg-gray-50">
+                    
+                    <MapOverview tasks={activeTasks} />
+                </div>
+
+                <div className="flex flex-col gap-4">
+                    <div className="border border-gray-200 p-8 bg-white flex flex-col justify-center h-full">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Earnings</p>
+                        <p className="text-4xl font-black text-gray-900 mt-1">Rs. {profile?.walletBalance || 0}</p>
+                        <div className="mt-6 flex items-center gap-2">
+                             <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                             <p className="text-[10px] text-gray-500 font-bold uppercase">Account Active</p>
                         </div>
+                    </div>
+                    
+                    <div className="border border-gray-200 p-8 bg-gray-50 flex flex-col justify-center h-full">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Success Rate</p>
+                        <p className="text-4xl font-black text-gray-900 mt-1">100%</p>
+                        <p className="text-[10px] text-gray-400 font-bold mt-4 uppercase">{completedTasks.length} Jobs Done</p>
                     </div>
                 </div>
             </div>
 
-
-        
-            <h1 className="text-2xl font-black mb-6">My Assigned Tasks</h1>
+            {/* --- TASK LIST SECTION --- */}
+            <div className="flex items-center justify-between mb-6 border-b border-gray-100">
+                <div className="flex gap-8">
+                    <button 
+                        onClick={() => setView('active')}
+                        className={`pb-2 text-xs font-black uppercase tracking-widest transition-all ${view === 'active' ? 'border-b-2 border-black text-black' : 'text-gray-300'}`}
+                    >
+                        Active Queue ({activeTasks.length})
+                    </button>
+                    <button 
+                        onClick={() => setView('completed')}
+                        className={`pb-2 text-xs font-black uppercase tracking-widest transition-all ${view === 'completed' ? 'border-b-2 border-black text-black' : 'text-gray-300'}`}
+                    >
+                        Completed ({completedTasks.length})
+                    </button>
+                </div>
+            </div>
             
-            <div className="space-y-4">
-                {tasks.length > 0 ? tasks.map(task => (
-                    <div key={task._id} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {(view === 'active' ? activeTasks : completedTasks).map(task => (
+                    <div key={task._id} className={`border p-5 flex flex-col transition-all ${task.status === 'resolved' ? 'bg-gray-50 border-gray-100' : 'bg-white border-gray-200 hover:border-black'}`}>
                         <div className="flex justify-between items-start mb-3">
-                            <span className="text-[10px] font-bold uppercase bg-blue-100 text-blue-600 px-2 py-1 rounded">
-                                {task.category}
-                            </span>
-                            <span className={`text-[10px] font-bold uppercase px-2 py-1 rounded ${
-                                task.status === 'resolved' ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'
-                            }`}>
+                            <span className="text-[9px] font-black bg-gray-100 px-2 py-1 uppercase">{task.category}</span>
+                            <span className={`text-[9px] font-black px-2 py-1 uppercase ${task.status === 'resolved' ? 'bg-gray-200 text-gray-500' : 'bg-black text-white'}`}>
                                 {task.status}
                             </span>
                         </div>
-
-                        <h2 className="text-lg font-bold text-gray-800">{task.title}</h2>
-                        <p className="text-sm text-gray-500 mb-4">{task.description}</p>
-
-                        <div className="bg-gray-50 rounded-xl p-3 text-xs text-gray-600 space-y-1 mb-4">
-                            <p><strong>📍 Location:</strong> {task.societyId?.name}, {task.societyId?.address}</p>
-                            <p><strong>👤 Resident:</strong> {task.createdBy?.name}</p>
+                        
+                        <h3 className={`font-bold uppercase text-sm mb-2 ${task.status === 'resolved' ? 'text-gray-400' : 'text-gray-900'}`}>{task.title}</h3>
+                        <p className="text-xs text-gray-500 line-clamp-2 mb-6">{task.description}</p>
+                        
+                        <div className="mt-auto pt-4 border-t border-gray-100 flex justify-between items-center">
+                            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">📍 {task.societyId?.name}</span>
+                            {task.status !== 'resolved' && (
+                                <button 
+                                    onClick={() => handleStatusUpdate(task._id, task.status)}
+                                    className="text-[10px] font-black uppercase text-blue-600 hover:underline"
+                                >
+                                    {task.status === 'in-progress' ? 'Finish Job' : 'Start Now'}
+                                </button>
+                            )}
                         </div>
-
-                        {task.status !== 'resolved' && (
-                            <button 
-                                onClick={() => handleStatusUpdate(task._id, task.status)}
-                                className={`w-full py-3 rounded-xl font-bold transition-all ${
-                                    task.status === 'in-progress' 
-                                    ? 'bg-green-600 text-white hover:bg-green-700' 
-                                    : 'bg-orange-500 text-white hover:bg-orange-600'
-                                }`}
-                            >
-                                {task.status === 'in-progress' ? '✅ Mark as Resolved' : '⚙️ Start Working'}
-                            </button>
-                        )}
                     </div>
-                )) : (
-                    <div className="text-center py-20 text-gray-400">No tasks assigned yet. Enjoy your break!</div>
+                ))}
+
+                {/* Empty State */}
+                {(view === 'active' ? activeTasks : completedTasks).length === 0 && (
+                    <div className="col-span-full py-20 text-center text-gray-300 text-[10px] font-black uppercase tracking-[0.2em]">
+                        No records found in this section
+                    </div>
                 )}
             </div>
         </div>

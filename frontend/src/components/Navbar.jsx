@@ -21,6 +21,7 @@ const Navbar = () => {
                 <div className="flex gap-4 text-sm font-semibold text-gray-600">
                     {user.role === 'admin' && (
                         <>
+                            <Link to="/dashboard" className="hover:text-blue-600">Home</Link>
                             <Link to="/admin/societies" className="hover:text-blue-600">Societies</Link>
                             <Link to="/admin/managers" className="hover:text-blue-600">Managers</Link>
                         </>
