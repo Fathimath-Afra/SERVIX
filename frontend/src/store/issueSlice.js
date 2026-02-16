@@ -3,15 +3,16 @@ import API from '../api/axios';
 
 
 export const fetchSocietyIssues = createAsyncThunk(
-  'issues/fetchSocietyIssues',
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await API.get('/issues/society');
-      return response.data;
-    } catch (err) {
-      return rejectWithValue(err.response.data);
+    'issues/fetchSocietyIssues',
+    async (params = {}, { rejectWithValue }) => {
+        try {
+            const { search = "", status = "all" } = params;
+            const response = await API.get(`/issues/society?search=${search}&status=${status}`);
+            return response.data;
+        } catch (err) {
+            return rejectWithValue(err.response.data);
+        }
     }
-  }
 );
 
 export const assignWorkerAction = createAsyncThunk(
@@ -42,9 +43,9 @@ export const fetchWorkerTasks = createAsyncThunk(
 // Thunk to update status
 export const updateIssueStatus = createAsyncThunk(
   'issues/updateStatus',
-  async ({ id, status }, { rejectWithValue }) => {
+  async ({ id, status ,workerNote}, { rejectWithValue }) => {
     try {
-      const response = await API.patch(`/issues/${id}/status`, { status });
+      const response = await API.patch(`/issues/${id}/status`, { status ,workerNote});
       return response.data.issue;
     } catch (err) {
       return rejectWithValue(err.response.data);
@@ -91,6 +92,7 @@ export const updateIssueAction = createAsyncThunk(
         }
     }
 );
+
 
 
 const issueSlice = createSlice({
@@ -144,6 +146,14 @@ const issueSlice = createSlice({
       .addCase(updateIssueAction.fulfilled, (state, action) => {
         const index = state.items.findIndex(item => item._id === action.payload._id);
         if (index !== -1) state.items[index] = action.payload;
+    })
+
+    // Handle Errors
+    .addMatcher(
+      (action) => action.type.endsWith('/rejected'),
+          (state, action) => {
+              state.loading = false;
+              state.error = action.payload;
     });
   },
 });

@@ -1,5 +1,6 @@
 const Issue = require('../Models/issue');
 const {createIssueValidation} = require('../Validations/issueValidation');
+const generateAIResolution = require('../../utils/aiSummarizer');
 const sendEmail = require('../../utils/sendEmail');
 const User = require('../Models/user'); 
 
@@ -115,23 +116,25 @@ issueCltr.updateStatus = async (req, res) => {
                 $inc: { walletBalance: BASE_FEE }
                 });
 
+                const professionalSummary = await generateAIResolution(issue.title, workerNote || "Work completed.");
+
+
                 const message = `
                     <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-                        <h2 style="color: #2563eb;">Issue Resolved!</h2>
+                        <h2 style="color: #2563eb;">Service Completed!</h2>
                         <p>Hello <b>${issue.createdBy.name}</b>,</p>
-                        <p>Great news! The issue you reported has been marked as <b>Resolved</b>.</p>
-                        <hr />
-                        <p><b>Issue Title:</b> ${issue.title}</p>
-                        <p><b>Description:</b> ${issue.description}</p>
-                        <hr />
-                        <p>Thank you for using SERVIX to keep your society running smoothly.</p>
-                        <p style="font-size: 12px; color: #777;">This is an automated notification from the SERVIX System.</p>
+                        
+                        <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                            ${professionalSummary}
+                        </div>
+
+                        <p style="font-size: 12px; color: #777;">Thank you for using SERVIX.</p>
                     </div>
                 `;
 
                 await sendEmail({
                     email: issue.createdBy.email,
-                    subject: `SERVIX: Issue Resolved - ${issue.title}`,
+                    subject: `RESOLVED: ${issue.title}`,
                     message: message,
                 });
             } catch (mailErr) {
@@ -180,6 +183,32 @@ issueCltr.update = async (req, res) => {
         res.json(issue);
     } catch (err) {
         res.status(500).json({ error: "Update failed" });
+    }
+};
+
+// search filter
+issueCltr.listBySociety = async (req, res) => {
+    try {
+        const { search, status } = req.query;
+        let query = { societyId: req.societyId };
+
+        if (status && status !== 'all') query.status = status;
+
+        if (search) {
+            query.$or = [
+                { title: { $regex: search, $options: 'i' } },
+                { category: { $regex: search, $options: 'i' } }
+            ];
+        }
+
+        const issues = await Issue.find(query)
+            .populate('createdBy', 'name')
+            .populate('assignedTo', 'name')
+            .sort({ createdAt: -1 });
+
+        res.json(issues);
+    } catch (err) {
+        res.status(500).json({ error: "Server Error" });
     }
 };
 

@@ -9,6 +9,7 @@ const WorkerDashboard = () => {
     const { items: tasks, loading } = useSelector(state => state.issues);
     const [profile, setProfile] = useState(null);
     const [view, setView] = useState('active'); // 'active' and 'completed'
+    const [notes, setNotes] = useState({}); 
 
     useEffect(() => {
         dispatch(fetchWorkerTasks());
@@ -24,11 +25,20 @@ const WorkerDashboard = () => {
     const handleStatusUpdate = async (id, currentStatus) => {
         // console.log(id , currentStatus);
         let nextStatus = currentStatus === 'open' ? 'in-progress' : 'resolved';
-        await dispatch(updateIssueStatus({ id, status: nextStatus }));
-        if (nextStatus === 'resolved') {
-            
-            const { data } = await API.get('/users/profile');
-            setProfile(data);
+        const workerNote = notes[id] || "";
+         if (nextStatus === 'resolved' && !workerNote) {
+            return Swal.fire("Note Required", "Please describe what you fixed so the AI can generate a report.", "info");
+        }
+
+        const result = await dispatch(updateIssueStatus({ 
+            id, 
+            status: nextStatus, 
+            workerNote: nextStatus === 'resolved' ? workerNote : null 
+        }));
+
+        if (nextStatus === 'resolved' && result.meta.requestStatus === 'fulfilled') {
+            Swal.fire("Job Complete", "AI has generated a professional report for the resident.", "success");
+            fetchFreshProfile();
         }
     };
 
@@ -98,6 +108,19 @@ const WorkerDashboard = () => {
                         
                         <h3 className={`font-bold uppercase text-sm mb-2 ${task.status === 'resolved' ? 'text-gray-400' : 'text-gray-900'}`}>{task.title}</h3>
                         <p className="text-xs text-gray-500 line-clamp-2 mb-6">{task.description}</p>
+
+                        {task.status === 'in-progress' && (
+                            <div className="mb-4">
+                                <textarea 
+                                    placeholder="Explain the fix (e.g., replaced wire)..."
+                                    className="w-full p-2 text-[11px] border border-gray-200 outline-none focus:border-blue-400 h-16 resize-none"
+                                    value={notes[task._id] || ""}
+                                    onChange={(e) => setNotes({...notes, [task._id]: e.target.value})}
+                                />
+                                <p className="text-[9px] text-gray-400 mt-1 uppercase font-bold">AI will polish this note for the resident.</p>
+                            </div>
+                        )}
+
                         
                         <div className="mt-auto pt-4 border-t border-gray-100 flex justify-between items-center">
                             <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">📍 {task.societyId?.name}</span>
