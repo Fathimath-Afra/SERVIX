@@ -15,7 +15,10 @@ const issue = require('./app/Models/issue');
 const app = express();
 const port = process.env.PORT || 5000;
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+    origin: ["http://localhost:5173", /\.vercel\.app$/], // This allows any vercel domain
+    credentials: true
+}));
 
 
 configureDB();
