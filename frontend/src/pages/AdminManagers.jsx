@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import API from '../api/axios';
+import { successAlert } from '../utils/alert';
 
 const AdminManagers = () => {
     const [societies, setSocieties] = useState([]);
@@ -20,7 +21,7 @@ const AdminManagers = () => {
         e.preventDefault();
         try {
             await API.post('/admin/create-manager', formData);
-            alert("Manager Created!");
+            successAlert("Succcess!", "New manager is assinged");
             setFormData({ name: '', email: '', password: '', societyId: '' });
             // Refresh manager list
             const { data } = await API.get('/admin/managers');

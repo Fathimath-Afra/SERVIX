@@ -112,9 +112,10 @@ issueCltr.updateStatus = async (req, res) => {
         if (status === 'resolved') {
             try {
                 const BASE_FEE = 700;
-                await User.findByIdAndUpdate(req.userId, {
-                $inc: { walletBalance: BASE_FEE }
-                });
+                const updatedUser = await User.findByIdAndUpdate(req.userId, 
+                    { $inc: { walletBalance: BASE_FEE } },
+                    { new: true } 
+                );
 
                 const professionalSummary = await generateAIResolution(issue.title, workerNote || "Work completed.");
 
@@ -142,7 +143,7 @@ issueCltr.updateStatus = async (req, res) => {
             }
         }
 
-        res.json({ message: `Status updated to ${status}`, issue });
+        res.json({ message: `Status updated to ${status}`, issue ,newBalance: updatedUser.walletBalance  });
     } catch (err) {
         res.status(500).json({ error: "Update failed" });
     }

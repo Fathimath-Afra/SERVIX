@@ -14,6 +14,7 @@ import ManagerWorkers from './pages/ManagerWorkers';
 import ReportIssue from './pages/ReportIssue';
 import WorkerDashboard from './pages/WorkerDashboard';
 import MyIssues from './pages/MyIssues';
+import Profile from './pages/Profile';
 
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -44,6 +45,12 @@ function App() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/register" element={<Register />} />
               <Route path="/login" element={<Login />} />
+
+              <Route path="/profile" element={
+              <ProtectedRoute>
+                  <Profile />
+              </ProtectedRoute>
+              } />
               
               {/* --- SHARED DASHBOARD ROUTE */}
               <Route path="/dashboard" element={

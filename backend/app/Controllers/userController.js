@@ -103,7 +103,11 @@ userCltr.login = async (req, res) => {
 
 userCltr.getProfile = async (req, res) => {
     try {
-        const user = await User.findById(req.userId).select('-password');
+        const user = await User.findById(req.userId).select('-password')
+        .populate('societyId', 'name address city');
+        console.log(user);
+        if (!user) return res.status(404).json({ error: "User not found" });
+
         res.json(user);
     } catch (err) {
         res.status(500).json({ error: "Failed to fetch profile" });
@@ -199,17 +203,41 @@ userCltr.createWorker = async (req,res) =>{
 
 userCltr.listWorkersBySociety = async (req, res) => {
     try {
-        const workers = await User.find({ 
+        const page = parseInt(req.query.page) || 1;    
+        const limit = parseInt(req.query.limit) || 6;  
+        const skip = (page - 1) * limit;               
+        const search = req.query.search || "";        
+
+        let query = { 
             role: 'worker', 
-            $or: [
-                { societyId: req.societyId }, // own staff
-                { societyId: null }          // Global freelancers/External vendors
-            ]
-        }).select('-password');
+            societyId: req.societyId 
+        };
+
         
-        res.json(workers); 
+        if (search) {
+            query.$or = [
+                { name: { $regex: search, $options: 'i' } },
+                { email: { $regex: search, $options: 'i' } }
+            ];
+        }
+
+        // pagination
+        const workers = await User.find(query)
+            .select('-password')
+            .skip(skip)
+            .limit(limit)
+            .sort({ createdAt: -1 });
+
+        const totalWorkers = await User.countDocuments(query);
+
+        res.json({
+            workers,
+            totalPages: Math.ceil(totalWorkers / limit),
+            currentPage: page,
+            totalWorkers
+        });
     } catch (err) {
-        res.status(500).json({ error: "Error fetching workers" });
+        res.status(500).json({ error: "Failed to fetch workers" });
     }
 };
 

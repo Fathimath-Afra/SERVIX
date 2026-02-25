@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchSocietyIssues, assignWorkerAction } from '../store/issueSlice';
+import { fetchWorkers } from '../store/workerSlice';
 import { successAlert } from '../utils/alert';
 import API from '../api/axios';
 import Swal from 'sweetalert2'; 
@@ -9,7 +10,8 @@ import ManagerOverview from '../components/ManagerOverview';
 const ManagerDashboard = () => {
     const dispatch = useDispatch();
     const { items: issues, loading } = useSelector((state) => state.issues);
-    const [workers, setWorkers] = useState([]);
+    const { items: workers, loading: workersLoading } = useSelector((state) => state.workers);
+   
     const [activeTab, setActiveTab] = useState('overview');
     const [statusFilter, setStatusFilter] = useState('all'); 
     const [searchTerm, setSearchTerm] = useState(""); 
@@ -17,13 +19,7 @@ const ManagerDashboard = () => {
 
     // 1. Fetch Workers only once
     useEffect(() => {
-        const fetchWorkers = async () => {
-            try {
-                const { data } = await API.get('/manager/workers');
-                setWorkers(data);
-            } catch (err) { console.error(err); }
-        };
-        fetchWorkers();
+       dispatch(fetchWorkers());
     }, []);
 
     // 2. BACKEND SEARCH & FILTER LOGIC (with Debounce)
@@ -80,7 +76,7 @@ const ManagerDashboard = () => {
                         </div>
                     </div>
 
-                    {/* ISSUES GRID (Now uses 'issues' directly as they are filtered by backend) */}
+                    {/* ISSUES GRID  */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {issues.length > 0 ? issues.map((issue) => (
                             <div key={issue._id} className="bg-white border border-gray-200 p-6 flex flex-col">

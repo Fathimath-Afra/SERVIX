@@ -16,7 +16,7 @@ const app = express();
 const port = process.env.PORT || 5000;
 app.use(express.json());
 app.use(cors({
-    origin: ["http://localhost:5173", /\.vercel\.app$/], // This allows any vercel domain
+    origin: ["http://localhost:5173","http://localhost:5174", /\.vercel\.app$/], // This allows any vercel domain
     credentials: true
 }));
 
@@ -30,8 +30,8 @@ app.get('/api/users/profile',authenticateUser,userCltr.getProfile);
 app.delete('/api/:id', authenticateUser, userCltr.remove);
 
 
-// app.post('/api/societies', authenticateUser, authorizeUser(['admin']), societyCltr.create);
-app.post('/api/societies', societyCltr.create);
+app.post('/api/societies', authenticateUser, authorizeUser(['admin']), societyCltr.create);
+// app.post('/api/societies', societyCltr.create);
 app.get('/api/societies', societyCltr.list);
 // app.put('/api/societies/:id', authenticateUser, authorizeUser(['admin']), societyCltr.update);
 app.delete('/api/societies/:id', authenticateUser, authorizeUser(['admin']), societyCltr.remove);

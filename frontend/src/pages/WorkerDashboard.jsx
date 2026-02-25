@@ -25,6 +25,7 @@ const WorkerDashboard = () => {
     const handleStatusUpdate = async (id, currentStatus) => {
         // console.log(id , currentStatus);
         let nextStatus = currentStatus === 'open' ? 'in-progress' : 'resolved';
+        
         const workerNote = notes[id] || "";
          if (nextStatus === 'resolved' && !workerNote) {
             return Swal.fire("Note Required", "Please describe what you fixed so the AI can generate a report.", "info");
@@ -37,6 +38,8 @@ const WorkerDashboard = () => {
         }));
 
         if (nextStatus === 'resolved' && result.meta.requestStatus === 'fulfilled') {
+            const newBalanceFromServer = result.payload.newBalance;
+            setProfile(prev => ({ ...prev, walletBalance: newBalanceFromServer }));
             Swal.fire("Job Complete", "AI has generated a professional report for the resident.", "success");
             fetchFreshProfile();
         }
