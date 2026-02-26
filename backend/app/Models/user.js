@@ -40,7 +40,13 @@ const userSchema = new mongoose.Schema(
     walletBalance: { 
       type: Number, 
       default: 0 
-    } 
+    },
+    // Inside userSchema
+    skills: { 
+      type: [String], 
+      default: [],
+      enum: ["water", "electricity", "waste", "plumbing", "cleaning","general","other"]
+    },
   },
   { timestamps: true }
 );

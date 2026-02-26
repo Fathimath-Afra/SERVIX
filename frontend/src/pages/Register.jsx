@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import API from '../api/axios';
+import Swal from "sweetalert2";
 
 export default function Register() {
     const [societies, setSocieties] = useState([]);
@@ -12,7 +13,7 @@ export default function Register() {
     useEffect(() => {
         const fetchSocieties = async () => {
             try {
-                const { data } = await API.get('/societies'); // Make sure this route is public
+                const { data } = await API.get('/societies'); //this route is public
                 setSocieties(data);
             } catch (err) {
                 console.error("Could not load societies");
@@ -25,10 +26,11 @@ export default function Register() {
         e.preventDefault();
         try {
             await API.post('/register', formData);
-            alert("Registration successful! Please login.");
+            Swal.fire( 'Successfuly Registered!!','please login to continue', "success");
             navigate('/login');
         } catch (err) {
-            alert(err.response?.data?.error || "Registration failed");
+            console.log(err.response?.data?.error );
+            Swal.fire('oops!!', "Registration failed");
         }
     };
 

@@ -4,9 +4,10 @@ import { fetchWorkers, createWorkerAction, deleteWorkerAction, updateWorkerActio
 import { successAlert } from '../utils/alert';
 import { workerSchema } from '../validations/yupSchemas'; 
 import * as Yup from 'yup';
+import { deleteConfirm } from '../utils/alert';
 
 
-const ManagerWorkers = () => {[]
+const ManagerWorkers = () => {
     const dispatch = useDispatch();
     const { items: workers, totalPages, loading } = useSelector(state => state.workers);
     const [page, setPage] = useState(1);
@@ -14,7 +15,7 @@ const ManagerWorkers = () => {[]
    const [errors, setErrors] = useState({});
 
     const [editId, setEditId] = useState(null);
-    const [formData, setFormData] = useState({ name: '', email: '', password: '', phone: '' });
+    const [formData, setFormData] = useState({ name: '', email: '', password: '', phone: '' , skills: [] });
 
 
     useEffect(() => {
@@ -23,6 +24,17 @@ const ManagerWorkers = () => {[]
         }, 500); // 500ms debounce
         return () => clearTimeout(delayDebounce);
     }, [page, search,dispatch]);
+
+    const handleSkillChange = (e) => {
+        const { value, checked } = e.target;
+        const currentSkills = [...formData.skills];
+
+        if (checked) {
+            setFormData({ ...formData, skills: [...currentSkills, value] });
+        } else {
+            setFormData({ ...formData, skills: currentSkills.filter(s => s !== value) });
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -35,13 +47,13 @@ const ManagerWorkers = () => {[]
                 if (updateWorkerAction.fulfilled.match(result)) {
                     successAlert("Updated!", "Worker details changed.");
                     setEditId(null);
-                    setFormData({ name: '', email: '', password: '', phone: '' });
+                    setFormData({ name: '', email: '', password: '', phone: '',skills: [] });
                 }
             } else {
                 //  CREATE
                 const result = await dispatch(createWorkerAction(formData));
                 if (createWorkerAction.fulfilled.match(result)) {
-                    setFormData({ name: '', email: '', password: '', phone: '' });
+                    setFormData({ name: '', email: '', password: '', phone: '' ,skills: []});
                     successAlert("Worker Added!");
                 }
             }
@@ -57,7 +69,8 @@ const ManagerWorkers = () => {[]
             name: worker.name, 
             email: worker.email, 
             phone: worker.phone || '', 
-            password: '' 
+            password: '' ,
+            skills: worker.skills || []
         });
         //  Scroll to top of form
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -70,6 +83,8 @@ const ManagerWorkers = () => {[]
         }
     };
 
+    const availableSkills = ["water", "electricity", "plumbing", "waste", "cleaning", "general"];
+
 
     return (
         <div className="p-8 max-w-7xl mx-auto font-sans">
@@ -77,7 +92,7 @@ const ManagerWorkers = () => {[]
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                 
-                {/* 1. DYNAMIC FORM COLUMN */}
+               {/* {editId ? 'Edit Profile' : 'New Enrollment'} */}
                 <div className={`p-6 border h-fit transition-all ${editId ? 'bg-orange-50 border-orange-200' : 'bg-white border-gray-200'}`}>
                     <h2 className={`text-xs font-black mb-6 uppercase tracking-widest ${editId ? 'text-orange-600' : 'text-blue-600'}`}>
                         {editId ? 'Edit Profile' : 'New Enrollment'}
@@ -95,6 +110,25 @@ const ManagerWorkers = () => {[]
                             {errors.email && <p className="text-[9px] text-red-500 font-bold uppercase mt-1">{errors.email}</p>}
                         </div>
 
+                       
+                        {/*  checkbox*/}
+                        <div className="py-2">
+                            <p className="text-[10px] font-black text-gray-400 uppercase mb-3 tracking-widest">Expertise Skills</p>
+                            <div className="grid grid-cols-2 gap-2">
+                                {availableSkills.map(skill => (
+                                    <label key={skill} className="flex items-center gap-2 cursor-pointer group">
+                                        <input 
+                                            type="checkbox" 
+                                            value={skill}
+                                            checked={formData.skills.includes(skill)}
+                                            onChange={handleSkillChange}
+                                            className="w-3 h-3 rounded border-gray-300"
+                                        />
+                                        <span className="text-[10px] font-bold uppercase text-gray-600 group-hover:text-black">{skill}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
                         <div>
                             <input type="text" placeholder="Phone (10 digits)" className="w-full p-2 border border-gray-200 text-sm outline-none focus:border-black bg-white"
                                 value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} />
@@ -114,7 +148,7 @@ const ManagerWorkers = () => {[]
                         </button>
 
                         {editId && (
-                            <button type="button" onClick={() => { setEditId(null); setFormData({name:'', email:'', phone:'', password:''}); }}
+                            <button type="button" onClick={() => { setEditId(null); setFormData({name:'', email:'', phone:'', password:'',skills: []}); }}
                                 className="w-full text-[9px] font-bold text-gray-400 uppercase tracking-widest hover:text-black">
                                 Cancel
                             </button>
@@ -148,6 +182,11 @@ const ManagerWorkers = () => {[]
                                             <h3 className="font-bold text-gray-900 text-sm uppercase">{w.name}</h3>
                                             <p className="text-[10px] text-gray-400 font-bold uppercase">{w.email}</p>
                                             <p className="text-[9px] text-blue-500 font-black mt-1">{w.phone}</p>
+                                            <div className="flex flex-wrap gap-1 mt-1">
+                                                {w.skills?.map(s => (
+                                                    <span key={s} className="text-[8px] bg-blue-50 text-blue-600 px-1 font-black uppercase">{s}</span>
+                                                ))}
+                                            </div>
                                         </div>
                                     </div>
                                     <div className="flex justify-end gap-4 mt-6 border-t pt-3 opacity-0 group-hover:opacity-100 transition-opacity">

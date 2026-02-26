@@ -94,6 +94,7 @@ const ReportIssue = () => {
                     <option value="electricity">Electricity</option>
                     <option value="plumbing">Plumbing</option>
                     <option value="waste">Waste</option>
+                     <option value="cleaning">Cleaning</option>
                     <option value="other">Other</option>
                 </select>
 

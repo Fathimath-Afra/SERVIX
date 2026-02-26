@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchWorkerTasks, updateIssueStatus } from '../store/issueSlice';
 import MapOverview from '../components/MapOverview';
 import API from '../api/axios';
+import Swal from 'sweetalert2'; 
 
 const WorkerDashboard = () => {
     const dispatch = useDispatch();
@@ -11,20 +12,29 @@ const WorkerDashboard = () => {
     const [view, setView] = useState('active'); // 'active' and 'completed'
     const [notes, setNotes] = useState({}); 
 
-    useEffect(() => {
-        dispatch(fetchWorkerTasks());
-        const fetchFreshProfile = async () => {
+
+     const fetchFreshProfile = async () => {
             try {
                 const { data } = await API.get('/users/profile');
                 setProfile(data);
             } catch (err) { console.error(err); }
-        };
+    };
+    
+    useEffect(() => {
+        dispatch(fetchWorkerTasks());
+       
         fetchFreshProfile();
     }, [dispatch]);
 
     const handleStatusUpdate = async (id, currentStatus) => {
         // console.log(id , currentStatus);
-        let nextStatus = currentStatus === 'open' ? 'in-progress' : 'resolved';
+        let nextStatus;
+        if (currentStatus === 'assigned') {
+            nextStatus = 'in-progress';
+        } else if (currentStatus === 'in-progress') {
+            nextStatus = 'resolved';
+        }   
+
         
         const workerNote = notes[id] || "";
          if (nextStatus === 'resolved' && !workerNote) {
@@ -37,11 +47,16 @@ const WorkerDashboard = () => {
             workerNote: nextStatus === 'resolved' ? workerNote : null 
         }));
 
-        if (nextStatus === 'resolved' && result.meta.requestStatus === 'fulfilled') {
-            const newBalanceFromServer = result.payload.newBalance;
-            setProfile(prev => ({ ...prev, walletBalance: newBalanceFromServer }));
-            Swal.fire("Job Complete", "AI has generated a professional report for the resident.", "success");
-            fetchFreshProfile();
+        if (result.meta.requestStatus === 'fulfilled') {
+            if (nextStatus === 'in-progress') {
+                Swal.fire("Started", "Task is now in progress.", "success");
+            } else if (nextStatus === 'resolved') {
+                const newBalanceFromServer = result.payload.newBalance;
+                setProfile(prev => ({ ...prev, walletBalance: newBalanceFromServer }));
+                Swal.fire("Job Complete", "AI has generated a professional report for the resident.", "success");
+                fetchFreshProfile();
+            }
+            
         }
     };
 
@@ -130,7 +145,11 @@ const WorkerDashboard = () => {
                             {task.status !== 'resolved' && (
                                 <button 
                                     onClick={() => handleStatusUpdate(task._id, task.status)}
-                                    className="text-[10px] font-black uppercase text-blue-600 hover:underline"
+                                     className={`text-[10px] font-black uppercase px-3 py-1 rounded transition-all ${
+                                        task.status === 'assigned' 
+                                        ? 'bg-black text-white hover:bg-gray-800' 
+                                        : 'text-blue-600 hover:underline'
+                                     }`}
                                 >
                                     {task.status === 'in-progress' ? 'Finish Job' : 'Start Now'}
                                 </button>

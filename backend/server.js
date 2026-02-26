@@ -43,6 +43,8 @@ app.get('/api/admin/managers', authenticateUser, authorizeUser(['admin']), userC
 
 app.post('/api/manager/create-worker', authenticateUser, authorizeUser(['manager']), userCltr.createWorker);
 app.get('/api/manager/workers', authenticateUser, authorizeUser(['manager']), userCltr.listWorkersBySociety);
+app.put('/api/manager/update-worker/:id', authenticateUser, authorizeUser(['manager']), userCltr.updateWorker);
+app.delete('/api/manager/delete-worker/:id',authenticateUser,authorizeUser(['manager']),userCltr.remove);
 
 
 app.post('/api/citizen/report-issue', authenticateUser,authorizeUser(['citizen']),upload.array('images', 3), issueCltr.reportIssue );
@@ -52,7 +54,7 @@ app.get('/api/issues/my-tasks',authenticateUser,authorizeUser(['worker']),issueC
 app.patch('/api/issues/:id/status', authenticateUser, authorizeUser(['worker']), issueCltr.updateStatus);
 app.get('/api/issues/my-reports', authenticateUser, authorizeUser(['citizen']), issueCltr.listByCitizen);
 app.put('/api/issue/:id',authenticateUser,authorizeUser(['citizen']),issueCltr.update);
-app.delete('/api/issue/:id',authenticateUser,authorizeUser(['citizen','admin']),userCltr.remove);
+app.delete('/api/issue/:id',authenticateUser,authorizeUser(['citizen','admin']),issueCltr.remove);
 app.get('/api/issues/society', authenticateUser, authorizeUser(['manager']), issueCltr.listBySociety);
 
 

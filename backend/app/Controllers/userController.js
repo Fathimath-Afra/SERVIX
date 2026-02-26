@@ -173,7 +173,7 @@ userCltr.createWorker = async (req,res) =>{
         return res.status(400).json({ error: error.details[0].message });
     }
 
-    const {name ,email, password} = value;
+    const { name, email, password, phone, skills} = value;
      const societyId = req.societyId; 
 
     const existingUser = await User.findOne({email});
@@ -187,7 +187,8 @@ userCltr.createWorker = async (req,res) =>{
         email,
         password: hashedPassword,
         role: 'worker',
-        societyId
+        societyId,
+        skills
     });
 
     await worker.save();
@@ -241,6 +242,37 @@ userCltr.listWorkersBySociety = async (req, res) => {
     }
 };
 
+
+userCltr.updateWorker = async (req, res) => {
+    try {
+        const { id } = req.params; // The Worker's ID
+        const { name, email, phone, skills } = req.body;
+
+        
+        const worker = await User.findById(id);
+
+        if (!worker) {
+            return res.status(404).json({ error: "Worker not found" });
+        }
+
+        //  Manager and Worker belong to the same society
+        if (worker.societyId.toString() !== req.societyId.toString()) {
+            return res.status(403).json({ error: "Unauthorized: You can only update workers in your society." });
+        }
+
+       
+        const updatedWorker = await User.findByIdAndUpdate(
+            id,
+            { name, email, phone, skills },
+            { new: true, runValidators: true }
+        ).select('-password');
+
+        res.json({ message: "Worker updated successfully", worker: updatedWorker });
+    } catch (err) {
+        console.error(err.errmsg);
+        res.status(500).json({ error: "Server error during update" });
+    }
+};
 
 userCltr.remove = async (req, res) => {
     try {

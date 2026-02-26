@@ -24,7 +24,7 @@ const createIssueValidation = Joi.object({
   }).optional(),
 
   status: Joi.string()
-    .valid("open", "in-progress", "resolved")
+    .valid("open", "assigned" ,"in-progress", "resolved")
     .optional(),
 
   // societyId: objectId.required(),

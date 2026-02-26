@@ -13,6 +13,10 @@ const registerValidation = Joi.object({
    
 
   societyId: Joi.string().hex().length(24).optional(),
+  skills: Joi.array()
+    .items(Joi.string())
+    .optional()
+    .default([])
 });
 
 const loginValidation = Joi.object({

@@ -32,8 +32,8 @@ export const updateWorkerAction = createAsyncThunk(
     'workers/updateWorker',
     async ({ id, formData }, { rejectWithValue }) => {
         try {
-            const response = await API.put(`/users/${id}`, formData);
-            return response.data; // The updated worker object
+            const response = await API.put(`/manager/update-worker/${id}`, formData);
+            return response.data.worker; // The updated worker object
         } catch (err) {
             return rejectWithValue(err.response.data);
         }
@@ -46,7 +46,7 @@ export const deleteWorkerAction = createAsyncThunk(
     'workers/deleteWorker',
     async (id, { rejectWithValue }) => {
         try {
-            await API.delete(`/users/${id}`);
+            await API.delete(`/manager/delete-worker/${id}`);
             return id;
         } catch (err) {
             return rejectWithValue(err.response.data);

@@ -19,6 +19,37 @@ issueCltr.reportIssue = async (req, res) => {
         }
 
         const { title, description, category, location } = value;
+         const societyId = req.societyId;
+         console.log("1. Issue Category:", category);
+        console.log("2. Citizen Society ID:", req.societyId);
+
+
+        const eligibleWorkers = await User.find({ 
+            role: 'worker', 
+            societyId,
+            skills: { $in: [category] } // Matches if 'category' exists in the skills array
+        });
+
+        console.log("3. Found Workers with this skill:", eligibleWorkers.length);
+
+        let assignedTo = null;
+        let status = 'open';
+
+        // if skilled workers exist ,finding the one with least busy
+        if (eligibleWorkers.length > 0) {
+            const workerStats = await Promise.all(eligibleWorkers.map(async (worker) => {
+                const count = await Issue.countDocuments({ 
+                    assignedTo: worker._id, 
+                    status: { $ne: 'resolved' } 
+                });
+                return { worker, count };
+            }));
+
+            workerStats.sort((a, b) => a.count - b.count);
+            assignedTo = workerStats[0].worker._id;
+            status = 'assigned';
+        } 
+         console.log("4. Auto-assigning to ID:", assignedTo);
         
         // Multer uploads images to Cloudinary and returns the URLs in req.files
         const imageUrls = req.files ? req.files.map(file => file.path) : [];
@@ -30,11 +61,17 @@ issueCltr.reportIssue = async (req, res) => {
             images: imageUrls,
             location: location || undefined,
             societyId: req.societyId, 
-            createdBy: req.userId    
+            createdBy: req.userId,
+            assignedTo, // worker id or null
+            status      // open or assigned  
         });
 
         await issue.save();
-        res.status(201).json({ message: "Issue reported successfully!", issue });
+         const responseMsg = assignedTo 
+            ? `Auto-assigned to a specialized worker.` 
+            : `Issue reported. No specialized worker available; Manager notified.`;
+
+        res.status(201).json({ message: responseMsg, issue });
     } catch (err) {
         console.error(err.message);
         res.status(500).json({ error: "Failed to report issue" });
@@ -96,59 +133,53 @@ issueCltr.listMyTasks = async (req, res) => {
 // updating status
 
 issueCltr.updateStatus = async (req, res) => {
-    try {
-        const { status } = req.body;
-        const { id } = req.params;
+  try {
+    const { status, workerNote } = req.body;
+    const { id } = req.params;
 
-        const issue = await Issue.findOneAndUpdate(
-            { _id: id, assignedTo: req.userId },
-            { status },
-            { new: true }
-        ).populate('createdBy', 'name email');
+    //(without updating)
+    const existingIssue = await Issue.findOne({
+      _id: id,
+      assignedTo: req.userId
+    });
 
-        if (!issue) return res.status(404).json({ error: "Task not found" });
-
-       
-        if (status === 'resolved') {
-            try {
-                const BASE_FEE = 700;
-                const updatedUser = await User.findByIdAndUpdate(req.userId, 
-                    { $inc: { walletBalance: BASE_FEE } },
-                    { new: true } 
-                );
-
-                const professionalSummary = await generateAIResolution(issue.title, workerNote || "Work completed.");
-
-
-                const message = `
-                    <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-                        <h2 style="color: #2563eb;">Service Completed!</h2>
-                        <p>Hello <b>${issue.createdBy.name}</b>,</p>
-                        
-                        <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                            ${professionalSummary}
-                        </div>
-
-                        <p style="font-size: 12px; color: #777;">Thank you for using SERVIX.</p>
-                    </div>
-                `;
-
-                await sendEmail({
-                    email: issue.createdBy.email,
-                    subject: `RESOLVED: ${issue.title}`,
-                    message: message,
-                });
-            } catch (mailErr) {
-                console.error("Email could not be sent", mailErr);
-            }
-        }
-
-        res.json({ message: `Status updated to ${status}`, issue ,newBalance: updatedUser.walletBalance  });
-    } catch (err) {
-        res.status(500).json({ error: "Update failed" });
+    if (!existingIssue) {
+      return res.status(404).json({ error: "Task not found" });
     }
-};
 
+    // Prevent double payment
+    const isAlreadyResolved = existingIssue.status === "resolved";
+    const isBecomingResolved = status === "resolved";
+
+ 
+    existingIssue.status = status;
+    await existingIssue.save();
+
+    let updatedUser = null;
+
+    // Pay only if transitioning from non-resolved → resolved
+    if (isBecomingResolved && !isAlreadyResolved) {
+
+      const BASE_FEE = 700;
+
+      updatedUser = await User.findByIdAndUpdate(
+        req.userId,
+        { $inc: { walletBalance: BASE_FEE } },
+        { new: true }
+      );
+    }
+
+    return res.json({
+      message: `Status updated to ${status}`,
+      issue: existingIssue,
+      newBalance: updatedUser?.walletBalance
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Update failed" });
+  }
+};
 
 // issues reported by the logged-in citizen
 issueCltr.listByCitizen = async (req, res) => {
