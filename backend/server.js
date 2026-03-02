@@ -7,6 +7,7 @@ const userCltr = require('./app/Controllers/userController');
 const societyCltr = require('./app/Controllers/societyController');
 const issueCltr = require('./app/Controllers/issueController');
 const reviewCltr = require('./app/Controllers/reviewController');
+const paymentCltr = require('./app/Controllers/paymentController');
 const { upload } = require('./config/cloudinary');
 
 
@@ -43,6 +44,7 @@ app.get('/api/admin/managers', authenticateUser, authorizeUser(['admin']), userC
 
 app.post('/api/manager/create-worker', authenticateUser, authorizeUser(['manager']), userCltr.createWorker);
 app.get('/api/manager/workers', authenticateUser, authorizeUser(['manager']), userCltr.listWorkersBySociety);
+app.patch('/api/worker/toggle-availability', authenticateUser, authorizeUser(['worker']), userCltr.toggleAvailability);
 app.put('/api/manager/update-worker/:id', authenticateUser, authorizeUser(['manager']), userCltr.updateWorker);
 app.delete('/api/manager/delete-worker/:id',authenticateUser,authorizeUser(['manager']),userCltr.remove);
 
@@ -59,6 +61,8 @@ app.get('/api/issues/society', authenticateUser, authorizeUser(['manager']), iss
 
 
 app.post('/api/reviews', authenticateUser, authorizeUser(['citizen']), reviewCltr.create);
+
+app.post('/api/payments/verify',authenticateUser,authorizeUser(['citizen']), paymentCltr.verifyAndPay);
 
 
 app.listen(port,() =>{

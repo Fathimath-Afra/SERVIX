@@ -78,15 +78,35 @@ const ManagerDashboard = () => {
 
                     {/* ISSUES GRID  */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {issues.length > 0 ? issues.map((issue) => (
-                            <div key={issue._id} className="bg-white border border-gray-200 p-6 flex flex-col">
+                                {issues.length > 0 ? issues.map((issue) => (
+                                <div key={issue._id} className="bg-white border border-gray-200 p-6 flex flex-col">
+                                    
+
                                 <div className="flex justify-between mb-4">
                                     <span className="text-[10px] font-bold uppercase bg-blue-50 text-blue-600 px-2 py-1">{issue.category}</span>
+
+                                     {issue.status === 'resolved' && (
+                                     <span className={`text-[8px] font-black px-2 py-0.5 uppercase border w-fit ${
+                                        issue.paymentStatus === 'paid' 
+                                        ? 'bg-green-100 text-green-700 border-green-200' 
+                                        : 'bg-yellow-100 text-yellow-700 border-yellow-200'
+                                    }`}>
+                                    {issue.paymentStatus === 'paid' ? 'Settled' : 'Payment Pending'}
+                                    </span>
+                                    )}
+                                    
                                     <span className={`text-[10px] font-bold uppercase px-2 py-1 ${issue.status === 'open' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>{issue.status}</span>
                                 </div>
 
                                 <h2 className="text-lg font-bold mb-2 uppercase">{issue.title}</h2>
                                 <p className="text-gray-500 text-sm mb-6 flex-grow">{issue.description}</p>
+
+                                {issue.status === 'resolved' && (
+                                    <div className="mb-4 p-2 bg-gray-50 border-l-4 border-gray-300">
+                                        <p className="text-[9px] font-black text-gray-400 uppercase">Service Charge</p>
+                                        <p className="text-sm font-black text-gray-800">Rs. {issue.serviceCharge}</p>
+                                    </div>
+                                )}
 
                                 <div className="mt-auto pt-4 border-t border-gray-100 text-xs text-gray-400 mb-4">
                                     Reported by: <span className="font-bold text-gray-700">{issue.createdBy?.name}</span>

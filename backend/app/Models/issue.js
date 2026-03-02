@@ -14,7 +14,7 @@ const issueSchema = new mongoose.Schema(
 
     category: {
       type: String,
-      enum: ["water", "electricity", "waste", "plumbing","other"],
+      enum: ["water", "electricity", "waste", "plumbing","cleaning","other"],
       required: true
     },
 
@@ -51,7 +51,16 @@ const issueSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       default: null
-    }
+    },
+    serviceCharge: { 
+    type: Number, 
+    default: 0 
+  },
+  paymentStatus: { 
+    type: String, 
+    enum: ['none', 'pending', 'paid'], 
+    default: 'none' 
+  },
   },
   { timestamps: true }
 );

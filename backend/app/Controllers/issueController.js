@@ -20,17 +20,18 @@ issueCltr.reportIssue = async (req, res) => {
 
         const { title, description, category, location } = value;
          const societyId = req.societyId;
-         console.log("1. Issue Category:", category);
-        console.log("2. Citizen Society ID:", req.societyId);
+        // console.log("1. Issue Category:", category);
+        // console.log("2. Citizen Society ID:", req.societyId);
 
 
         const eligibleWorkers = await User.find({ 
             role: 'worker', 
             societyId,
-            skills: { $in: [category] } // Matches if 'category' exists in the skills array
+            skills: { $in: [category]},
+            isAvailable: true
         });
 
-        console.log("3. Found Workers with this skill:", eligibleWorkers.length);
+        // console.log("3. Found Workers with this skill:", eligibleWorkers.length);
 
         let assignedTo = null;
         let status = 'open';
@@ -134,45 +135,36 @@ issueCltr.listMyTasks = async (req, res) => {
 
 issueCltr.updateStatus = async (req, res) => {
   try {
-    const { status, workerNote } = req.body;
+    const { status, workerNote ,amount} = req.body;
     const { id } = req.params;
 
     //(without updating)
     const existingIssue = await Issue.findOne({
       _id: id,
       assignedTo: req.userId
-    });
+    }).populate('createdBy', 'name email');
 
     if (!existingIssue) {
       return res.status(404).json({ error: "Task not found" });
     }
 
-    // Prevent double payment
-    const isAlreadyResolved = existingIssue.status === "resolved";
-    const isBecomingResolved = status === "resolved";
+     existingIssue.status = status;
 
- 
-    existingIssue.status = status;
-    await existingIssue.save();
-
-    let updatedUser = null;
-
-    // Pay only if transitioning from non-resolved → resolved
-    if (isBecomingResolved && !isAlreadyResolved) {
-
-      const BASE_FEE = 700;
-
-      updatedUser = await User.findByIdAndUpdate(
-        req.userId,
-        { $inc: { walletBalance: BASE_FEE } },
-        { new: true }
-      );
+     if (status === "resolved") {
+        existingIssue.serviceCharge = Number(amount) || 0;
+        existingIssue.paymentStatus = "pending";
+     
     }
 
-    return res.json({
+    await existingIssue.save();
+
+     const updatedIssue = await Issue.findById(id)
+        .populate('createdBy', 'name email')
+        .populate('assignedTo', 'name')
+        .populate('societyId', 'name address');
+    return res.status(200).json({
       message: `Status updated to ${status}`,
-      issue: existingIssue,
-      newBalance: updatedUser?.walletBalance
+      issue: existingIssue, 
     });
 
   } catch (err) {
@@ -184,10 +176,25 @@ issueCltr.updateStatus = async (req, res) => {
 // issues reported by the logged-in citizen
 issueCltr.listByCitizen = async (req, res) => {
     try {
-        const issues = await Issue.find({ createdBy: req.userId })
-            .populate('assignedTo', 'name') 
-            .sort({ createdAt: -1 });
-        res.json(issues);
+        const page = parseInt(req.query.page) || 1;
+        const limit = 4; 
+        const skip = (page - 1) * limit;
+
+        const query = { createdBy: req.userId };
+
+        const issues = await Issue.find(query)
+            .populate('assignedTo', 'name')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        const totalIssues = await Issue.countDocuments(query);
+
+        res.json({
+            issues,
+            totalPages: Math.ceil(totalIssues / limit),
+            currentPage: page
+        })
     } catch (err) {
         res.status(500).json({ error: "Failed to fetch your issues" });
     }

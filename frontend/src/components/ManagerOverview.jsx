@@ -17,6 +17,15 @@ const ManagerOverview = ({ issues }) => {
 
     const COLORS = ['#ef4444', '#3b82f6', '#22c55e'];
 
+    const totalRevenue = issues
+    .filter(i => i.paymentStatus === 'paid')
+    .reduce((sum, i) => sum + (i.serviceCharge || 0), 0);
+
+    const pendingRevenue = issues
+    .filter(i => i.paymentStatus === 'pending')
+    .reduce((sum, i) => sum + (i.serviceCharge || 0), 0);
+
+
     return (
         <div className="space-y-10 animate-in fade-in duration-500">
             
@@ -31,6 +40,16 @@ const ManagerOverview = ({ issues }) => {
                 <div className="bg-gray-900 border border-gray-900 p-6 shadow-sm">
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Reports</p>
                     <p className="text-3xl font-black mt-1 text-white">{issues.length}</p>
+                </div>
+
+                <div className="bg-green-600 border border-green-600 p-6 shadow-sm">
+                    <p className="text-[10px] font-bold text-green-100 uppercase tracking-widest">Total Settled</p>
+                    <p className="text-3xl font-black mt-1 text-white">Rs. {totalRevenue}</p>
+                </div>
+
+                <div className="bg-white border border-yellow-300 p-6 shadow-sm">
+                    <p className="text-[10px] font-bold text-yellow-500 uppercase tracking-widest">Awaiting Payment</p>
+                    <p className="text-3xl font-black mt-1 text-gray-900">Rs. {pendingRevenue}</p>
                 </div>
             </div>
 

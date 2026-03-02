@@ -43,9 +43,9 @@ export const fetchWorkerTasks = createAsyncThunk(
 // Thunk to update status
 export const updateIssueStatus = createAsyncThunk(
   'issues/updateStatus',
-  async ({ id, status ,workerNote}, { rejectWithValue }) => {
+  async ({ id, status ,workerNote , amount}, { rejectWithValue }) => {
     try {
-      const response = await API.patch(`/issues/${id}/status`, { status ,workerNote});
+      const response = await API.patch(`/issues/${id}/status`, { status ,workerNote,amount});
       return response.data.issue;
     } catch (err) {
       return rejectWithValue(err.response.data);
@@ -57,9 +57,9 @@ export const updateIssueStatus = createAsyncThunk(
 //to fetch citizen's own issue
 export const fetchCitizenIssues = createAsyncThunk(
   'issues/fetchCitizenIssues',
-  async (_, { rejectWithValue }) => {
+  async (page = 1, { rejectWithValue }) => {
     try {
-      const response = await API.get('/issues/my-reports');
+      const response = await API.get(`/issues/my-reports?page=${page}`);
       return response.data;
     } catch (err) {
       return rejectWithValue(err.response.data);
@@ -86,7 +86,7 @@ export const updateIssueAction = createAsyncThunk(
     async ({ id, formData }, { rejectWithValue }) => {
         try {
             const response = await API.put(`/issue/${id}`, formData);
-            return response.data;
+            return response.data.issue;
         } catch (err) {
             return rejectWithValue(err.response.data);
         }
@@ -101,6 +101,7 @@ const issueSlice = createSlice({
     items: [],
     loading: false,
     error: null,
+    totalPages: 0
   },
   reducers: {
     //  add local reducers here later for things like filtering
@@ -130,13 +131,16 @@ const issueSlice = createSlice({
       })
 
       .addCase(updateIssueStatus.fulfilled, (state, action) => {
-        const index = state.items.findIndex(i => i._id === action.payload._id);
-        if (index !== -1) state.items[index] = action.payload;
+        const updatedIssue = action.payload; 
+    
+        const index = state.items.findIndex(i => i._id === updatedIssue._id);
+        if (index !== -1) state.items[index] = updatedIssue;
       })
 
       .addCase(fetchCitizenIssues.fulfilled, (state, action) => {
-        state.items = action.payload;
         state.loading = false;
+        state.items = action.payload.issues;
+        state.totalPages = action.payload.totalPages;
       })
 
       .addCase(deleteIssueAction.fulfilled, (state, action) => {

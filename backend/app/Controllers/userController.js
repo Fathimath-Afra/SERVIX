@@ -105,7 +105,7 @@ userCltr.getProfile = async (req, res) => {
     try {
         const user = await User.findById(req.userId).select('-password')
         .populate('societyId', 'name address city');
-        console.log(user);
+        // console.log(user);
         if (!user) return res.status(404).json({ error: "User not found" });
 
         res.json(user);
@@ -271,6 +271,17 @@ userCltr.updateWorker = async (req, res) => {
     } catch (err) {
         console.error(err.errmsg);
         res.status(500).json({ error: "Server error during update" });
+    }
+};
+
+userCltr.toggleAvailability = async (req, res) => {
+    try {
+        const user = await User.findById(req.userId);
+        user.isAvailable = !user.isAvailable;
+        await user.save();
+        res.json({ isAvailable: user.isAvailable });
+    } catch (err) {
+        res.status(500).json({ error: "Failed to update status" });
     }
 };
 

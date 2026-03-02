@@ -8,10 +8,11 @@ import {
 import API from "../api/axios";
 import { deleteConfirm, successAlert } from "../utils/alert";
 import Swal from "sweetalert2";
+import UPIPaymentModal from "../components/UPIPaymentModal";
 
 const MyIssues = () => {
   const dispatch = useDispatch();
-  const { items: issues, loading } = useSelector((state) => state.issues);
+  const { items: issues, loading , totalPages } = useSelector((state) => state.issues);
   
   // Review States
   const [selectedIssue, setSelectedIssue] = useState(null); 
@@ -21,9 +22,13 @@ const MyIssues = () => {
   const [editId, setEditId] = useState(null);
   const [editData, setEditData] = useState({ title: '', description: '', category: '' });
 
+  const [showUPI, setShowUPI] = useState(false);
+  const [activeIssue, setActiveIssue] = useState(null);
+  const [page, setPage] = useState(1);
+
   useEffect(() => {
-    dispatch(fetchCitizenIssues());
-  }, [dispatch]);
+    dispatch(fetchCitizenIssues(page));
+  }, [dispatch , page]);
 
   const getStatusStyle = (status) => {
     switch (status) {
@@ -73,6 +78,21 @@ const MyIssues = () => {
     successAlert("Updated", "Issue details changed.");
   };
 
+ const handleUPISuccess = async (details) => {
+    try {
+        await API.post('/payments/verify', {
+            transactionId: details.transactionId,
+            workerId: activeIssue.assignedTo._id,
+            amount: activeIssue.serviceCharge,
+            issueId: activeIssue._id
+        });
+        setShowUPI(false);
+        successAlert("Paid!", "Worker has received your payment via UPI.");
+        dispatch(fetchCitizenIssues());
+    } catch (err) {
+        alert("Verification failed");
+    }
+};
   if (loading) return <div className="p-10 text-center">Loading your reports...</div>;
 
   return (
@@ -129,7 +149,45 @@ const MyIssues = () => {
                         </div>
                     </div>
                   </div>
+                  
 
+                  {issue.status === 'resolved' && issue.paymentStatus === 'pending' && (
+                  <div className="mt-4 p-4 border border-gray-200 bg-gray-50 flex justify-between items-center">
+                    <div>
+                      <p className="text-[10px] font-black text-gray-400 uppercase">Service Bill</p>
+                      <p className="text-xl font-black">Rs. {issue.serviceCharge}</p>
+                    </div>
+                    <button 
+                      onClick={() => { setActiveIssue(issue); setShowUPI(true); }}
+                      className="bg-blue-600 text-white px-6 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 shadow-md"
+                    >
+                    Pay with UPI
+                    </button>
+                  </div>
+                  )}
+
+                  {showUPI && (
+                    <UPIPaymentModal 
+                    amount={activeIssue.serviceCharge} 
+                    onSucess={handleUPISuccess}
+                   onCancel={() => setShowUPI(false)}
+                    />
+                  )}
+
+                  {issue.paymentStatus === 'paid' ? (
+                  <div className="mt-4 p-3 bg-green-50 border border-green-200 flex items-center gap-2">
+                    <span className="text-green-600 text-lg font-bold">✓</span>
+                    <p className="text-[10px] font-black text-green-700 uppercase tracking-widest">
+                    Payment Settled to Worker Wallet
+                    </p>
+                </div>
+                ) : issue.status === 'resolved' && (
+                  <button onClick={() => handlePay(issue)}>
+                    Pay Rs. {issue.serviceCharge}
+                  </button>
+                )}
+
+                
                   {/* ACTION BUTTONS */}
                   <div className="mt-6 pt-4 border-t border-gray-50 flex gap-4 items-center">
                     {issue.status === "open" && (
@@ -184,6 +242,30 @@ const MyIssues = () => {
           </div>
         )}
       </div>
+
+      {totalPages > 1 && (
+                <div className="mt-12 flex justify-center items-center gap-6 border-t pt-8">
+                    <button 
+                        disabled={page === 1}
+                        onClick={() => setPage(p => p - 1)}
+                        className="px-4 py-1 border border-gray-200 text-[10px] font-black uppercase tracking-widest hover:bg-gray-50 disabled:opacity-20 transition-all"
+                    >
+                        &larr; Previous
+                    </button>
+                    
+                    <span className="text-[10px] font-black uppercase tracking-tighter">
+                        Page {page} of {totalPages}
+                    </span>
+
+                    <button 
+                        disabled={page === totalPages}
+                        onClick={() => setPage(p => p + 1)}
+                        className="px-4 py-1 border border-gray-200 text-[10px] font-black uppercase tracking-widest hover:bg-gray-50 disabled:opacity-20 transition-all"
+                    >
+                        Next &rarr;
+                    </button>
+                </div>
+            )}
     </div>
   );
 };

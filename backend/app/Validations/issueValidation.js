@@ -10,7 +10,7 @@ const createIssueValidation = Joi.object({
   description: Joi.string().min(10).required(),
 
   category: Joi.string()
-    .valid("water", "electricity", "waste","plumbing", "other")
+    .valid("water", "electricity", "waste","plumbing","cleaning", "other")
     .required(),
 
   images: Joi.array()

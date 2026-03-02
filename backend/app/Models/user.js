@@ -47,6 +47,10 @@ const userSchema = new mongoose.Schema(
       default: [],
       enum: ["water", "electricity", "waste", "plumbing", "cleaning","general","other"]
     },
+    isAvailable: { 
+      type: Boolean, 
+      default: true 
+    },
   },
   { timestamps: true }
 );

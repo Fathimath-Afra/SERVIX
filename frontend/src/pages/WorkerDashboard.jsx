@@ -4,6 +4,7 @@ import { fetchWorkerTasks, updateIssueStatus } from '../store/issueSlice';
 import MapOverview from '../components/MapOverview';
 import API from '../api/axios';
 import Swal from 'sweetalert2'; 
+import { successAlert } from '../utils/alert';
 
 const WorkerDashboard = () => {
     const dispatch = useDispatch();
@@ -11,6 +12,7 @@ const WorkerDashboard = () => {
     const [profile, setProfile] = useState(null);
     const [view, setView] = useState('active'); // 'active' and 'completed'
     const [notes, setNotes] = useState({}); 
+    const [serviceAmounts, setServiceAmounts] = useState({});
 
 
      const fetchFreshProfile = async () => {
@@ -28,37 +30,51 @@ const WorkerDashboard = () => {
 
     const handleStatusUpdate = async (id, currentStatus) => {
         // console.log(id , currentStatus);
+         console.log("Button clicked. ID:", id, "Current Status:", currentStatus);
         let nextStatus;
         if (currentStatus === 'assigned') {
             nextStatus = 'in-progress';
         } else if (currentStatus === 'in-progress') {
             nextStatus = 'resolved';
         }   
-
+        if (!nextStatus) return;
         
         const workerNote = notes[id] || "";
-         if (nextStatus === 'resolved' && !workerNote) {
-            return Swal.fire("Note Required", "Please describe what you fixed so the AI can generate a report.", "info");
+        const amount = serviceAmounts[id] || "";
+
+        if (nextStatus === 'resolved') {
+            if (!workerNote) return Swal.fire("Note Required", "Describe the fix for the AI report.", "info");
+            if (!amount) return Swal.fire("Amount Required", "Set a service charge for the citizen.", "info");
+            
         }
 
         const result = await dispatch(updateIssueStatus({ 
             id, 
             status: nextStatus, 
-            workerNote: nextStatus === 'resolved' ? workerNote : null 
+            workerNote: nextStatus === 'resolved' ? workerNote : null ,
+            amount: nextStatus === 'resolved' ? Number(amount) : null 
         }));
 
-        if (result.meta.requestStatus === 'fulfilled') {
-            if (nextStatus === 'in-progress') {
-                Swal.fire("Started", "Task is now in progress.", "success");
-            } else if (nextStatus === 'resolved') {
-                const newBalanceFromServer = result.payload.newBalance;
-                setProfile(prev => ({ ...prev, walletBalance: newBalanceFromServer }));
-                Swal.fire("Job Complete", "AI has generated a professional report for the resident.", "success");
-                fetchFreshProfile();
-            }
-            
+       
+        if (updateIssueStatus.fulfilled.match(result)) {
+            successAlert("Success", `Task is now ${nextStatus}`);
+        } else {
+            Swal.fire("Error", "Could not update status", "error");
         }
+        if (nextStatus === 'resolved') fetchFreshProfile();
     };
+
+    const toggleDuty = async () => {
+    try {
+        const { data } = await API.patch('/worker/toggle-availability');
+        
+        setProfile(prev => ({ ...prev, isAvailable: data.isAvailable }));
+        
+        successAlert(data.isAvailable ? "You are now ON DUTY" : "You are now OFF DUTY");
+    } catch (err) {
+        console.error("Status update failed");
+    }
+};
 
     if (loading) return <div className="p-10 text-center uppercase text-[10px] font-black tracking-widest">Syncing Tasks...</div>;
 
@@ -70,6 +86,25 @@ const WorkerDashboard = () => {
         <div className="max-w-7xl mx-auto p-6 font-sans">
             
             <h1 className="text-2xl font-black uppercase mb-6 border-b pb-2 tracking-tight">Worker Console</h1>
+
+            <div className="flex justify-between items-center bg-white border border-gray-200 p-4 mb-8">
+                <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${profile?.isAvailable ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">
+                        Current Status: {profile?.isAvailable ? 'Available' : 'Unavailable'}
+                    </p>
+                </div>
+                <button 
+                    onClick={toggleDuty}
+                    className={`px-4 py-1 text-[10px] font-black uppercase border transition-all ${
+                    profile?.isAvailable 
+                    ? 'bg-white text-red-500 border-red-500 hover:bg-red-50' 
+                    : 'bg-black text-white border-black'
+                    }`}
+                    >
+                    {profile?.isAvailable ? 'Go Off Duty' : 'Go On Duty'}
+                </button>
+            </div>
 
             {/* --- TOP SECTION: MAP & STATS --- */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
@@ -136,6 +171,23 @@ const WorkerDashboard = () => {
                                     onChange={(e) => setNotes({...notes, [task._id]: e.target.value})}
                                 />
                                 <p className="text-[9px] text-gray-400 mt-1 uppercase font-bold">AI will polish this note for the resident.</p>
+                         
+
+                            
+                            <label className="text-[10px] font-black uppercase text-gray-400">Set Service Charge (Rs.)</label>
+                            <input 
+                                type="number"
+                                placeholder="Enter amount..."
+                                className="w-full p-2 border border-gray-200 outline-none font-bold"
+                                value={serviceAmounts[task._id] || ""}
+                                onChange={(e) => setServiceAmounts({...serviceAmounts,[task._id]: e.target.value})}
+                            />
+                            <button 
+                                onClick={() => handleStatusUpdate(task._id, task.status)}
+                                className="w-full bg-black text-white py-2 text-[10px] font-black uppercase"
+                            >
+                            Complete & Bill Citizen
+                            </button>
                             </div>
                         )}
 
@@ -151,7 +203,7 @@ const WorkerDashboard = () => {
                                         : 'text-blue-600 hover:underline'
                                      }`}
                                 >
-                                    {task.status === 'in-progress' ? 'Finish Job' : 'Start Now'}
+                                    {task.status === 'assigned' ? '▶ Start Now' : '✅ Finish & Bill'}
                                 </button>
                             )}
                         </div>
