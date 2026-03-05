@@ -68,9 +68,23 @@ issueCltr.reportIssue = async (req, res) => {
         });
 
         await issue.save();
+
+
          const responseMsg = assignedTo 
             ? `Auto-assigned to a specialized worker.` 
             : `Issue reported. No specialized worker available; Manager notified.`;
+
+        const io = req.app.get('socketio');
+        if (io && assignedTo) {
+        //  Convert ObjectId to String
+        const workerRoom = assignedTo.toString(); 
+
+        io.to(workerRoom).emit('new_task', {
+            title: "New Task!",
+            message: `New ${req.body.category} task assigned to you.`
+        });
+        }
+    
 
         res.status(201).json({ message: responseMsg, issue });
     } catch (err) {
@@ -82,7 +96,7 @@ issueCltr.reportIssue = async (req, res) => {
 
 issueCltr.listBySociety = async (req, res) => {
     try {
-        // Findind all issues where societyId matches the manager's society
+        //  all issues where societyId matches the manager's society
         const issues = await Issue.find({ societyId: req.societyId })
             .populate('createdBy', 'name') 
             .sort({ createdAt: -1 });
@@ -162,9 +176,22 @@ issueCltr.updateStatus = async (req, res) => {
         .populate('createdBy', 'name email')
         .populate('assignedTo', 'name')
         .populate('societyId', 'name address');
-    return res.status(200).json({
+
+    const io = req.app.get('socketio'); 
+     
+    const citizenRoom = existingIssue.createdBy._id.toString(); 
+    
+    console.log("Emitting to string room:", citizenRoom);
+    
+    // Notify the Citizen specifically in their private room
+    io.to(citizenRoom).emit('status_updated', {
+        message: `Your issue "${existingIssue.title}" is now ${existingIssue.status}`
+    })
+    
+
+    res.json({
       message: `Status updated to ${status}`,
-      issue: existingIssue, 
+      issue: existingIssue,
     });
 
   } catch (err) {

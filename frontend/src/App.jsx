@@ -2,6 +2,10 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import { useContext } from 'react';
 import ProtectedRoute from './components/ProtectedRoute';
+import { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
+import Swal from 'sweetalert2';
+
 
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -16,8 +20,64 @@ import WorkerDashboard from './pages/WorkerDashboard';
 import MyIssues from './pages/MyIssues';
 import Profile from './pages/Profile';
 
+
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import socket from './api/scoket';
+
+
+const SocketManager = () => {
+    const { user, isAuthenticated } = useContext(AuthContext);
+    const dispatch = useDispatch();
+
+    useEffect(() => {
+        if (isAuthenticated && user) {
+            socket.connect();
+            
+            const roomId = String(user.userId || user._id); // 🚀 Force to string
+            socket.emit('join_private_room', roomId);
+
+            // DEBUG LOG: Verify connection
+            socket.on('connect', () => console.log("✅ Socket Connected to Server"));
+
+            socket.on('new_task', (data) => {
+                console.log("📩 Received 'new_task':", data); 
+                Swal.fire({
+                    title: data.title,
+                    text: data.message,
+                    icon: 'success',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 5000
+                });
+                dispatch(fetchWorkerTasks());
+            });
+
+            socket.on('status_updated', (data) => {
+                console.log("📩 Received 'status_updated':", data); 
+                Swal.fire({
+                    title: 'Status Update',
+                    text: data.message,
+                    icon: 'info',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 5000
+                });
+                dispatch(fetchCitizenIssues());
+            });
+        }
+
+        return () => {
+            socket.off('new_task');
+            socket.off('status_updated');
+            socket.disconnect();
+        };
+    }, [isAuthenticated, user, dispatch]);
+
+    return null; 
+};
 
 
 const DashboardRedirect = () => {
@@ -34,6 +94,7 @@ const DashboardRedirect = () => {
 function App() {
   return (
     <AuthProvider>
+      <SocketManager />
       <Router>
        
         <div className="flex flex-col min-h-screen">
