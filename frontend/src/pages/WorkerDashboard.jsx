@@ -5,6 +5,7 @@ import MapOverview from '../components/MapOverview';
 import API from '../api/axios';
 import Swal from 'sweetalert2'; 
 import { successAlert } from '../utils/alert';
+import socket from '../api/scoket';
 
 const WorkerDashboard = () => {
     const dispatch = useDispatch();
@@ -27,6 +28,41 @@ const WorkerDashboard = () => {
        
         fetchFreshProfile();
     }, [dispatch]);
+
+    
+    useEffect(() => {
+        let watchId;
+    
+    
+        const activeTask = tasks.find(t => t.status === 'in-progress');
+
+        if (activeTask) {
+
+            navigator.geolocation.getCurrentPosition((pos) => {
+            socket.emit('send_location', {
+                issueId: activeTask._id,
+                lat: pos.coords.latitude,
+                lng: pos.coords.longitude,
+                workerName: profile?.name,
+                citizenId: activeTask.createdBy 
+            });
+        });
+            watchId = navigator.geolocation.watchPosition((pos) => {
+          
+                socket.emit('send_location', {
+                    issueId: activeTask._id,
+                    lat: pos.coords.latitude,
+                    lng: pos.coords.longitude,
+                    workerName: profile?.name,
+                    citizenId: activeTask.createdBy._id 
+                });
+            }, (err) => console.error(err), { enableHighAccuracy: true });
+        }
+
+        return () => {
+            if (watchId) navigator.geolocation.clearWatch(watchId);
+        };
+    }, [tasks, profile]);
 
     const handleStatusUpdate = async (id, currentStatus) => {
         // console.log(id , currentStatus);

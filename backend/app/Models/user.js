@@ -1,3 +1,4 @@
+const { required } = require("joi");
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
@@ -34,7 +35,8 @@ const userSchema = new mongoose.Schema(
     societyId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Society",
-      default: null
+      default: null,
+      required : false
     },
 
     walletBalance: { 

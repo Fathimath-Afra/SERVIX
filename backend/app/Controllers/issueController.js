@@ -28,7 +28,11 @@ issueCltr.reportIssue = async (req, res) => {
             role: 'worker', 
             societyId,
             skills: { $in: [category]},
-            isAvailable: true
+            isAvailable: true,
+             $or: [
+                { societyId: req.societyId }, 
+                { societyId: null }           
+            ]
         });
 
         // console.log("3. Found Workers with this skill:", eligibleWorkers.length);
@@ -165,10 +169,48 @@ issueCltr.updateStatus = async (req, res) => {
      existingIssue.status = status;
 
      if (status === "resolved") {
-        existingIssue.serviceCharge = Number(amount) || 0;
-        existingIssue.paymentStatus = "pending";
+      existingIssue.serviceCharge = Number(amount) || 0;
+      existingIssue.paymentStatus = "pending";
+
+     
+      try {
+        
+        const professionalSummary = await generateAIResolution(existingIssue.title, workerNote || "Task completed.");
+
+        
+        const emailMessage = `
+            <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                <h2 style="color: #2563eb;">Service Completed!</h2>
+                <p>Hello <b>${existingIssue.createdBy.name}</b>,</p>
+                <p>The issue you reported: <b>"${existingIssue.title}"</b> has been resolved.</p>
+                
+                <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2563eb;">
+                    <p style="margin: 0; color: #1e293b;">${professionalSummary}</p>
+                </div>
+
+                <p><b>Service Charge:</b> Rs. ${amount}</p>
+                <p>Please log in to your SERVIX dashboard to settle the payment via UPI/PayPal.</p>
+                <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;"/>
+                <p style="font-size: 12px; color: #777;">Thank you for using SERVIX Management System.</p>
+            </div>
+        `;
+
+        
+        await sendEmail({
+          email: existingIssue.createdBy.email,
+          subject: `RESOLVED: ${existingIssue.title}`,
+          message: emailMessage,
+        });
+
+        console.log("✅ AI Report generated and Email sent to:", existingIssue.createdBy.email);
+
+      } catch (postResolveErr) {
+       
+        console.error("❌ Email/AI step failed:", postResolveErr.message);
+      }
      
     }
+
 
     await existingIssue.save();
 
@@ -179,19 +221,19 @@ issueCltr.updateStatus = async (req, res) => {
 
     const io = req.app.get('socketio'); 
      
-    const citizenRoom = existingIssue.createdBy._id.toString(); 
+    const citizenRoom = updatedIssue.createdBy._id.toString(); 
     
     console.log("Emitting to string room:", citizenRoom);
     
     // Notify the Citizen specifically in their private room
     io.to(citizenRoom).emit('status_updated', {
-        message: `Your issue "${existingIssue.title}" is now ${existingIssue.status}`
+        message: `Your issue "${updatedIssue.title}" is now ${updatedIssue.status}`
     })
     
 
     res.json({
       message: `Status updated to ${status}`,
-      issue: existingIssue,
+      issue: updatedIssue,
     });
 
   } catch (err) {

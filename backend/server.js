@@ -55,6 +55,11 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         console.log(' User Disconnected');
     });
+
+    socket.on('send_location', (data) => {
+    // Ensure data looks like: { lat, lng, citizenId, issueId, workerName }
+    io.to(String(data.citizenId)).emit('worker_moving', data);
+    });
 });
 
 app.post('/api/register',userCltr.register);

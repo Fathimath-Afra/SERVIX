@@ -9,6 +9,8 @@ import API from "../api/axios";
 import { deleteConfirm, successAlert } from "../utils/alert";
 import Swal from "sweetalert2";
 import UPIPaymentModal from "../components/UPIPaymentModal";
+import socket from "../api/scoket";
+import LiveTrackingMap from "../components/LiveTrackingMap";
 
 const MyIssues = () => {
   const dispatch = useDispatch();
@@ -26,9 +28,30 @@ const MyIssues = () => {
   const [activeIssue, setActiveIssue] = useState(null);
   const [page, setPage] = useState(1);
 
+  const [liveWorkerPos, setLiveWorkerPos] = useState(null);
+  const [trackingId, setTrackingId] = useState(null);
+
   useEffect(() => {
     dispatch(fetchCitizenIssues(page));
   }, [dispatch , page]);
+
+
+  useEffect(() => {
+    // Listener for movement
+    socket.on('worker_moving', (data) => {
+        setLiveWorkerPos(data); 
+    });
+
+    return () => socket.off('worker_moving');
+}, []);
+
+const toggleTracking = (id) => {
+    if (trackingId === id) {
+        setTrackingId(null); // Close the map
+    } else {
+        setTrackingId(id); // Open the map for this issue
+    }
+};
 
   const getStatusStyle = (status) => {
     switch (status) {
@@ -93,6 +116,8 @@ const MyIssues = () => {
         alert("Verification failed");
     }
 };
+
+
   if (loading) return <div className="p-10 text-center">Loading your reports...</div>;
 
   return (
@@ -149,8 +174,54 @@ const MyIssues = () => {
                         </div>
                     </div>
                   </div>
-                  
 
+
+                  {/* Inside your issue mapping loop */}
+{issue.status === 'in-progress' && (
+    <div className="mt-4 pt-4 border-t border-gray-100">
+        <div className="flex justify-between items-center mb-2">
+            <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest animate-pulse">
+                🛰️ Worker Active
+            </p>
+            
+            {/* 📍 TRACK BUTTON */}
+            <button 
+                onClick={() => toggleTracking(issue._id)}
+                className={`px-3 py-1 text-[10px] font-black uppercase border transition-all ${
+                    trackingId === issue._id 
+                    ? 'bg-red-50 text-red-600 border-red-200' 
+                    : 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700'
+                }`}
+            >
+                {trackingId === issue._id ? '✕ Stop Tracking' : '📍 Track Worker'}
+            </button>
+        </div>
+
+        {/* 🗺️ CONDITIONAL MAP RENDERING */}
+        {trackingId === issue._id && (
+            <div className="mt-4 animate-in slide-in-from-top-2 duration-500">
+                {liveWorkerPos && liveWorkerPos.issueId === issue._id ? (
+                    <div className="h-60 w-full border border-blue-100 rounded-xl overflow-hidden shadow-sm">
+                        <LiveTrackingMap 
+                            lat={liveWorkerPos.lat} 
+                            lng={liveWorkerPos.lng} 
+                            name={liveWorkerPos.workerName} 
+                        />
+                    </div>
+                ) : (
+                    <div className="h-40 w-full flex flex-col items-center justify-center bg-gray-50 border border-dashed border-gray-200 rounded-xl">
+                        <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-2"></div>
+                        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest text-center">
+                            Awaiting GPS Handshake... <br />
+                            Ensure worker is moving
+                        </p>
+                    </div>
+                )}
+            </div>
+        )}
+    </div>
+)}
+                  
                   {issue.status === 'resolved' && issue.paymentStatus === 'pending' && (
                   <div className="mt-4 p-4 border border-gray-200 bg-gray-50 flex justify-between items-center">
                     <div>

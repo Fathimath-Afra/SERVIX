@@ -17,6 +17,8 @@ const AdminManagers = () => {
         fetchData();
     }, []);
 
+
+    
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -62,6 +64,7 @@ const AdminManagers = () => {
                         </button>
                     </form>
                 </div>
+
 
                 {/* LIST */}
                 <div className="lg:col-span-2">

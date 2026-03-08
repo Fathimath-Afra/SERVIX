@@ -1,5 +1,6 @@
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'; // Added useMap
 import { useEffect } from 'react';
+import { useState } from 'react';
 import L from 'leaflet';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
@@ -15,14 +16,20 @@ L.Marker.prototype.options.icon = DefaultIcon;
 // 🆕 Helper component to move the map when data arrives
 function RecenterMap({ tasks }) {
     const map = useMap();
+    const [hasCentered, setHasCentered] = useState(false);
+
     useEffect(() => {
-        if (tasks.length > 0 && tasks[0].location) {
+        // 🚀 Only center if we have tasks and we HAVEN'T centered yet
+        if (tasks.length > 0 && !hasCentered) {
             const { lat, lng } = tasks[0].location;
-            map.setView([lat, lng], 13); // Moves camera to first task
+            map.setView([lat, lng], 13);
+            setHasCentered(true); // Stop future auto-snapping
         }
-    }, [tasks, map]);
+    }, [tasks, map, hasCentered]);
+
     return null;
 }
+
 
 const TaskOverviewMap = ({ tasks }) => {
     const validTasks = tasks.filter(t => t.location && t.location.lat && t.location.lng);
@@ -40,7 +47,7 @@ const TaskOverviewMap = ({ tasks }) => {
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
                 
-                {/* 🆕 This component handles the auto-centering */}
+                
                 <RecenterMap tasks={validTasks} />
 
                 {validTasks.map((task) => (
