@@ -2,17 +2,25 @@ import { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { jwtDecode } from "jwt-decode";
+import { loginSchema } from '../validations/yupSchemas';
 import API from '../api/axios';
+import * as Yup from 'yup';
 
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [errors, setErrors] = useState({}); 
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const { login } = useContext(AuthContext);
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setIsSubmitting(true);
         try {
+
+             await loginSchema.validate({ email, password }, { abortEarly: false });
+            setErrors({});
             const response = await API.post('/login', { email, password });
             const token = response.data.token;
             login(token);
@@ -28,8 +36,19 @@ const Login = () => {
                 navigate('/dashboard'); // For Citizens and Workers
             } 
         } catch (err) {
-            console.error(err);
-            alert(err.response?.data?.error || "Login failed. Check backend console.");
+            if (err instanceof Yup.ValidationError) {
+                
+                const newErrors = {};
+                err.inner.forEach(e => {
+                    newErrors[e.path] = e.message;
+                });
+                setErrors(newErrors);
+            } else {
+                console.error(err);
+                alert(err.response?.data?.error || "Login failed. Check server.");
+            }
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -41,7 +60,7 @@ const Login = () => {
                     <p className="text-gray-500 mt-2">Residential Service Management</p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-6" noValidate>
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 ml-1">Email Address</label>
                         <input 
@@ -51,6 +70,7 @@ const Login = () => {
                             onChange={(e) => setEmail(e.target.value)}
                             required
                         />
+                        {errors.email && <p className="text-[10px] text-red-500 font-bold uppercase mt-1 ml-1 tracking-tighter">{errors.email}</p>}
                     </div>
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 ml-1">Password</label>
@@ -61,6 +81,7 @@ const Login = () => {
                             onChange={(e) => setPassword(e.target.value)}
                             required
                         />
+                    {errors.password && <p className="text-[10px] text-red-500 font-bold uppercase mt-1 ml-1 tracking-tighter">{errors.password}</p>}
                     </div>
                     <button 
                         type="submit" 

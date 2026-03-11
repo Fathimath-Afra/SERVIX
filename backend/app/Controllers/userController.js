@@ -1,5 +1,6 @@
 const bcryptjs = require('bcryptjs');
 const User = require('../Models/user');
+const Society = require('../Models/society');
 const jwt = require('jsonwebtoken');
 const {registerValidation ,loginValidation} = require('../Validations/userValidation');
 const userCltr = {};
@@ -300,6 +301,35 @@ userCltr.remove = async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: "Delete failed" });
     }
+};
+
+userCltr.getSystemStats = async (req, res) => {
+    try {
+        const [soc, man, cit, wor] = await Promise.all([
+            Society.countDocuments(),
+            User.countDocuments({ role: 'manager' }),
+            User.countDocuments({ role: 'citizen' }),
+            User.countDocuments({ role: 'worker' })
+        ]);
+
+        res.json({
+            societies: soc,
+            managers: man,
+            citizens: cit,
+            workers: wor
+        });
+    } catch (err) {
+        res.status(500).json({ error: "Stats fetch failed" });
+    }
+};
+
+userCltr.getAllUsers = async (req, res) => {
+    try {
+        const users = await User.find({ role: { $ne: 'admin' } })
+            .populate('societyId', 'name')
+            .sort({ createdAt: -1 });
+        res.json(users);
+    } catch (err) { res.status(500).json({ error: "Failed" }); }
 };
 
 module.exports = userCltr;

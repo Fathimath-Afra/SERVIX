@@ -11,7 +11,8 @@ const LandingPage = () => {
     }, [isAuthenticated, navigate]);
 
     return (
-        <div className="max-w-4xl mx-auto px-4 py-16 font-sans">
+        <div className="w-full min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100 font-sans">
+       <div className="max-w-4xl mx-auto px-4 py-16">
             <div className="border-b border-gray-200 pb-12">
                 <h1 className="text-4xl font-bold text-gray-900 uppercase tracking-tight">
                     SERVIX
@@ -57,6 +58,7 @@ const LandingPage = () => {
                 
             </div>
         </div>
+    </div>
     );
 };
 

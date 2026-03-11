@@ -8,12 +8,16 @@ const societyCltr = require('./app/Controllers/societyController');
 const issueCltr = require('./app/Controllers/issueController');
 const reviewCltr = require('./app/Controllers/reviewController');
 const paymentCltr = require('./app/Controllers/paymentController');
+const analyticsCltr = require('./app/Controllers/analyticsController');
 const { upload } = require('./config/cloudinary');
+const multer = require('multer');
+
+const storage = multer.memoryStorage();
+const uploadMemory = multer({ storage });
 
 
 
 const express =require('express');
-const issue = require('./app/Models/issue');
 const app = express();
 const port = process.env.PORT || 5000;
 app.use(express.json());
@@ -77,6 +81,9 @@ app.delete('/api/societies/:id', authenticateUser, authorizeUser(['admin']), soc
 
 app.post('/api/admin/create-manager', authenticateUser, authorizeUser(['admin']), userCltr.createManager);
 app.get('/api/admin/managers', authenticateUser, authorizeUser(['admin']), userCltr.listManagers);
+app.get('/api/admin/ai-insights',authenticateUser,authorizeUser(['admin']),analyticsCltr.getAdminInsights);
+app.get('/api/admin/system-stats',authenticateUser,authorizeUser(['admin']),userCltr.getSystemStats);
+app.get('/api/admin/all-users',authenticateUser,authorizeUser(['admin']),userCltr.getAllUsers);
 
 
 app.post('/api/manager/create-worker', authenticateUser, authorizeUser(['manager']), userCltr.createWorker);
@@ -87,6 +94,7 @@ app.delete('/api/manager/delete-worker/:id',authenticateUser,authorizeUser(['man
 
 
 app.post('/api/citizen/report-issue', authenticateUser,authorizeUser(['citizen']),upload.array('images', 3), issueCltr.reportIssue );
+app.post('/api/analyze-image', authenticateUser, uploadMemory.single('image'),issueCltr.analzeImage);
 app.get('/api/issues/society', authenticateUser, authorizeUser(['manager']), issueCltr.listBySociety);
 app.put('/api/issues/assign-worker', authenticateUser, authorizeUser(['manager']), issueCltr.assignWorker);
 app.get('/api/issues/my-tasks',authenticateUser,authorizeUser(['worker']),issueCltr.listMyTasks);
@@ -95,6 +103,7 @@ app.get('/api/issues/my-reports', authenticateUser, authorizeUser(['citizen']), 
 app.put('/api/issue/:id',authenticateUser,authorizeUser(['citizen']),issueCltr.update);
 app.delete('/api/issue/:id',authenticateUser,authorizeUser(['citizen','admin']),issueCltr.remove);
 app.get('/api/issues/society', authenticateUser, authorizeUser(['manager']), issueCltr.listBySociety);
+app.get('/api/admin/all-issues',authenticateUser,authorizeUser(['admin']),issueCltr.getAllIssues);
 
 
 app.post('/api/reviews', authenticateUser, authorizeUser(['citizen']), reviewCltr.create);

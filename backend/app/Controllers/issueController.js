@@ -2,7 +2,10 @@ const Issue = require('../Models/issue');
 const {createIssueValidation} = require('../Validations/issueValidation');
 const generateAIResolution = require('../../utils/aiSummarizer');
 const sendEmail = require('../../utils/sendEmail');
-const User = require('../Models/user'); 
+const analyzeImageWithAI = require('../../utils/aiVision');
+const User = require('../Models/user');
+
+
 
 
 const issueCltr = {};
@@ -96,20 +99,6 @@ issueCltr.reportIssue = async (req, res) => {
         res.status(500).json({ error: "Failed to report issue" });
     }
 };
-
-
-issueCltr.listBySociety = async (req, res) => {
-    try {
-        //  all issues where societyId matches the manager's society
-        const issues = await Issue.find({ societyId: req.societyId })
-            .populate('createdBy', 'name') 
-            .sort({ createdAt: -1 });
-        res.json(issues);
-    } catch (err) {
-        res.status(500).json({ error: "Failed to fetch issues" });
-    }
-};
-
 
 issueCltr.assignWorker = async (req, res) => {
     try {
@@ -242,6 +231,23 @@ issueCltr.updateStatus = async (req, res) => {
   }
 };
 
+
+issueCltr.analzeImage =async (req, res) => {
+    try {
+        if (!req.file) return res.status(400).json({ error: "Image required" });
+        
+        const result = await analyzeImageWithAI(req.file.buffer, req.file.mimetype);
+        
+        if (result) {
+            res.json(result);
+        } else {
+            res.status(422).json({ error: "AI failed to analyze photo" });
+        }
+    } catch (err) {
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+};
+
 // issues reported by the logged-in citizen
 issueCltr.listByCitizen = async (req, res) => {
     try {
@@ -297,11 +303,14 @@ issueCltr.update = async (req, res) => {
 // search filter
 issueCltr.listBySociety = async (req, res) => {
     try {
+         const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 6; 
+        const skip = (page - 1) * limit;
         const { search, status } = req.query;
+
         let query = { societyId: req.societyId };
 
         if (status && status !== 'all') query.status = status;
-
         if (search) {
             query.$or = [
                 { title: { $regex: search, $options: 'i' } },
@@ -309,15 +318,35 @@ issueCltr.listBySociety = async (req, res) => {
             ];
         }
 
+        
         const issues = await Issue.find(query)
             .populate('createdBy', 'name')
             .populate('assignedTo', 'name')
-            .sort({ createdAt: -1 });
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
 
-        res.json(issues);
+        
+        const totalIssues = await Issue.countDocuments(query);
+
+        res.json({
+            issues,
+            totalPages: Math.ceil(totalIssues / limit),
+            currentPage: page,
+            totalCount: totalIssues
+        });
     } catch (err) {
         res.status(500).json({ error: "Server Error" });
     }
+};
+
+issueCltr.getAllIssues = async (req, res) => {
+    try {
+        const issues = await Issue.find()
+            .populate('societyId', 'name')
+            .sort({ createdAt: -1 });
+        res.json(issues);
+    } catch (err) { res.status(500).json({ error: "Failed" }); }
 };
 
 module.exports = issueCltr;

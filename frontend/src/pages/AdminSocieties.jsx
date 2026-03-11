@@ -2,10 +2,13 @@ import { useState, useEffect } from 'react';
 import API from '../api/axios';
 import { deleteConfirm, successAlert } from '../utils/alert';
 import Swal from 'sweetalert2';
+import { societySchema } from '../validations/yupSchemas';
+import * as Yup from 'yup';
 
 const AdminSocieties = () => {
     const [societies, setSocieties] = useState([]);
     const [formData, setFormData] = useState({ name: '', address: '', city: '' });
+    const [errors , setErrors] = useState({});
 
     const fetchSocieties = async () => {
         try {
@@ -21,12 +24,23 @@ const AdminSocieties = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            await societySchema.validate(formData , {abortEarly:false});
+            setErrors({});
             await API.post('/societies', formData);
             setFormData({ name: '', address: '', city: '' });
             fetchSocieties();
             successAlert("Success!", "New society added.");
         } catch (err) {
-            Swal.fire("Error", "Action failed.", "error");
+             if (err instanceof Yup.ValidationError) {
+                const newErrors = {};
+                err.inner.forEach(e => {
+                     newErrors[e.path] = e.message;
+                });
+                setErrors(newErrors);
+            } else {
+                console.log(err.response?.data?.error);
+                Swal.fire('Oops!!', err.response?.data?.error || "Action failed", "error");
+            }
         }
     };
 
@@ -54,10 +68,13 @@ const AdminSocieties = () => {
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <input type="text" placeholder="Name" required className="w-full p-2 border border-gray-200 text-sm outline-none focus:border-blue-500"
                             value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
+                        {errors.name && <p className="text-[10px] text-red-500 font-bold uppercase mt-1 ml-1">{errors.name}</p>}
                         <input type="text" placeholder="Address" required className="w-full p-2 border border-gray-200 text-sm outline-none focus:border-blue-500"
                             value={formData.address} onChange={(e) => setFormData({...formData, address: e.target.value})} />
+                        {errors.address && <p className="text-[10px] text-red-500 font-bold uppercase mt-1 ml-1">{errors.sddress}</p>}
                         <input type="text" placeholder="City" required className="w-full p-2 border border-gray-200 text-sm outline-none focus:border-blue-500"
                             value={formData.city} onChange={(e) => setFormData({...formData, city: e.target.value})} />
+                        {errors.city && <p className="text-[10px] text-red-500 font-bold uppercase mt-1 ml-1">{errors.city}</p>}
                         <button type="submit" className="w-full bg-blue-600 text-white py-2 text-sm font-bold hover:bg-blue-700">CREATE</button>
                     </form>
                 </div>

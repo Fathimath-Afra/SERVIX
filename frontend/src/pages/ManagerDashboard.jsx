@@ -9,13 +9,14 @@ import ManagerOverview from '../components/ManagerOverview';
 
 const ManagerDashboard = () => {
     const dispatch = useDispatch();
-    const { items: issues, loading } = useSelector((state) => state.issues);
+    const { items: issues, loading,totalPages } = useSelector((state) => state.issues);
     const { items: workers, loading: workersLoading } = useSelector((state) => state.workers);
    
     const [activeTab, setActiveTab] = useState('overview');
     const [statusFilter, setStatusFilter] = useState('all'); 
     const [searchTerm, setSearchTerm] = useState(""); 
     const [selections, setSelections] = useState({});
+    const [page ,setPage] = useState(1);
 
     // 1. Fetch Workers only once
     useEffect(() => {
@@ -25,17 +26,27 @@ const ManagerDashboard = () => {
     // 2. BACKEND SEARCH & FILTER LOGIC (with Debounce)
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
-            dispatch(fetchSocietyIssues({ search: searchTerm, status: statusFilter }));
+            dispatch(fetchSocietyIssues({ search: searchTerm, status: statusFilter ,page}));
         }, 500);
 
         return () => clearTimeout(delayDebounceFn);
-    }, [searchTerm, statusFilter, dispatch]);
+    }, [searchTerm, statusFilter, page,dispatch]);
 
     const handleAssign = (issueId) => {
         const workerId = selections[issueId];
         if (!workerId) return Swal.fire("Oops", "Select a worker first", "info");
         dispatch(assignWorkerAction({ issueId, workerId }));
         successAlert("Assigned!");
+    };
+
+    const handleFilterChange = (newStatus) => {
+        setStatusFilter(newStatus);
+        setPage(1);
+    };
+
+    const handleSearchChange = (e) => {
+        setSearchTerm(e.target.value);
+        setPage(1);
     };
 
     return (
@@ -60,14 +71,14 @@ const ManagerDashboard = () => {
                             placeholder="Search title or category..."
                             className="w-full md:w-80 p-2 border border-gray-200 text-sm outline-none focus:border-black"
                             value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onChange={(e) => handleSearchChange(e)}
                         />
 
                         <div className="flex gap-2">
                             {['all', 'open', 'in-progress', 'resolved'].map(status => (
                                 <button 
                                     key={status}
-                                    onClick={() => setStatusFilter(status)}
+                                    onClick={() => handleFilterChange(status)}
                                     className={`px-4 py-1 text-[10px] font-bold uppercase border transition ${statusFilter === status ? 'bg-black text-white' : 'bg-white text-gray-400'}`}
                                 >
                                     {status}
@@ -137,6 +148,31 @@ const ManagerDashboard = () => {
                             <div className="col-span-full py-20 text-center text-gray-400 font-bold uppercase text-xs tracking-widest">No issues found matching your criteria.</div>
                         )}
                     </div>
+
+
+                    {totalPages > 1 && (
+                        <div className="mt-12 flex justify-center items-center gap-6 border-t pt-8">
+                            <button 
+                                disabled={page === 1}
+                                onClick={() => setPage(p => p - 1)}
+                                className="px-4 py-1 border border-gray-200 text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-white disabled:opacity-20 transition-all"
+                            >
+                                &larr; Prev
+                            </button>
+                            
+                            <span className="text-[10px] font-black uppercase tracking-tighter">
+                                Page {page} of {totalPages}
+                            </span>
+
+                            <button 
+                                disabled={page === totalPages}
+                                onClick={() => setPage(p => p + 1)}
+                                className="px-4 py-1 border border-gray-200 text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-white disabled:opacity-20 transition-all"
+                            >
+                                Next &rarr;
+                            </button>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

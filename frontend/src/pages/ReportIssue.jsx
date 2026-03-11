@@ -16,6 +16,8 @@ const ReportIssue = () => {
     const [location, setLocation] = useState(null); 
     const [previews, setPreviews] = useState([]); // Stores blob URLs for preview
     const [isSearching, setIsSearching] = useState(false);
+    const [isAnalyzing,setIsAnalyzing] = useState(false);
+
     
     // const { location, getMyLocation, error: locError } = useGeolocation();
 
@@ -82,6 +84,33 @@ const ReportIssue = () => {
         }
     };
 
+
+    const handleAIAnalysis = async () => {
+    if (images.length === 0) return;
+    
+    setIsAnalyzing(true);
+    const formData = new FormData();
+    formData.append('image', images[0]); 
+
+    try {
+        const { data } = await API.post('/analyze-image', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+
+        //  AUTO-FILL LOGIC
+        setTitle(data.title);
+        setCategory(data.category);
+        setDescription(data.description);
+        
+        successAlert("AI Magic Applied!", "Details filled based on your photo.");
+    } catch (err) {
+        Swal.fire("AI Error", "Could not analyze this photo. Please type manually.", "info");
+    } finally {
+        setIsAnalyzing(false);
+    }
+};
+    
+
     return (
         <div className="max-w-xl mx-auto p-8 bg-white rounded-2xl shadow-lg mt-10">
             <h2 className="text-2xl font-bold mb-6 text-blue-600">Report Issue</h2>
@@ -89,6 +118,11 @@ const ReportIssue = () => {
                 <input type="text" placeholder="Title" value={title} onChange={(e)=>setTitle(e.target.value)} required 
                     className="w-full p-3 border rounded-xl" />
                 
+                
+                
+
+                
+
                 <select value={category} onChange={(e)=>setCategory(e.target.value)} className="w-full p-3 border rounded-xl">
                     <option value="water">Water</option>
                     <option value="electricity">Electricity</option>
@@ -126,8 +160,7 @@ const ReportIssue = () => {
                     {location && <p className="text-[9px] text-green-600 font-bold mt-1 uppercase tracking-widest">✓ Geocode Locked</p>}
                 </div>
 
-
-                <div>
+                 <div>
                     <label className="block text-[10px] font-black uppercase text-gray-400 mb-2 tracking-widest">Evidence Photos</label>
                     <input type="file" multiple accept="image/*" onChange={handleImageChange} 
                         className="text-[10px] text-gray-500 block w-full file:mr-4 file:py-2 file:px-4 file:border-0 file:bg-gray-100 file:text-gray-700 file:font-bold file:uppercase hover:file:bg-gray-200 cursor-pointer" />
@@ -141,6 +174,39 @@ const ReportIssue = () => {
                         ))}
                     </div>
                 </div>
+                
+                
+                
+                {images.length > 0 && (
+                    <div className="bg-blue-50 p-4 border border-blue-100 mb-6 flex flex-col md:flex-row items-center justify-between gap-4 animate-in fade-in duration-500">
+                        <div className="flex items-center gap-3">
+                            <span className="text-xl">✨</span>
+                        <div>
+                        <p className="text-[10px] font-black uppercase text-blue-600 tracking-widest">Smart Assistant</p>
+                        <p className="text-[9px] text-blue-400 font-bold uppercase">AI can fill the title and category for you</p>
+                    </div>
+                    </div>
+        
+                    <button 
+                        type="button"
+                        disabled={isAnalyzing}
+                        onClick={handleAIAnalysis}
+                        className={`px-6 py-2 text-[10px] font-black uppercase border transition-all ${
+                        isAnalyzing 
+                        ? 'bg-white text-gray-300 border-gray-100 cursor-not-allowed' 
+                        : 'bg-white text-blue-600 border-blue-200 hover:bg-blue-600 hover:text-white shadow-sm'
+                        }`}
+                     >
+                        {isAnalyzing ? (
+                        <span className="flex items-center gap-2">
+                        <div className="w-2 h-2 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                            Analyzing...
+                        </span>
+                        ) : "Auto-fill using AI"}
+                    </button>
+            </div>
+            )}
+
 
                 <button 
                     type="submit" 

@@ -6,9 +6,9 @@ export const fetchSocietyIssues = createAsyncThunk(
     'issues/fetchSocietyIssues',
     async (params = {}, { rejectWithValue }) => {
         try {
-            const { search = "", status = "all" } = params;
-            const response = await API.get(`/issues/society?search=${search}&status=${status}`);
-            return response.data;
+            const { search = "", status = "all", page = 1 } = params;
+            const response = await API.get(`/issues/society?search=${search}&status=${status}&page=${page}`);
+            return response.data; // returns { issues, totalPages, ... }
         } catch (err) {
             return rejectWithValue(err.response.data);
         }
@@ -100,6 +100,7 @@ const issueSlice = createSlice({
   initialState: {
     items: [],
     loading: false,
+    totalPages : 1,
     error: null,
     totalPages: 0
   },
@@ -113,7 +114,8 @@ const issueSlice = createSlice({
       })
       .addCase(fetchSocietyIssues.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload;
+        state.items = action.payload.issues; 
+        state.totalPages = action.payload.totalPages; 
       })
       .addCase(fetchSocietyIssues.rejected, (state, action) => {
         state.loading = false;

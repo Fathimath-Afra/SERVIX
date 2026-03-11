@@ -97,7 +97,7 @@ const ManagerWorkers = () => {
                     <h2 className={`text-xs font-black mb-6 uppercase tracking-widest ${editId ? 'text-orange-600' : 'text-blue-600'}`}>
                         {editId ? 'Edit Profile' : 'New Enrollment'}
                     </h2>
-                    <form onSubmit={handleSubmit} className="space-y-5">
+                    <form onSubmit={handleSubmit} className="space-y-5" noValidate>
                         <div>
                             <input type="text" placeholder="Worker Name" className="w-full p-2 border border-gray-200 text-sm outline-none focus:border-black bg-white"
                                 value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
