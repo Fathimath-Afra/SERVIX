@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Swal from 'sweetalert2';
 
 const UPIPaymentModal = ({ amount, onSucess, onCancel }) => {
-    const [step, setStep] = useState(1); // 1: Select App, 2: Scan QR
+    const [step, setStep] = useState(1); 
 
     const handleSimulatePayment = () => {
         Swal.fire({
@@ -33,7 +33,7 @@ const UPIPaymentModal = ({ amount, onSucess, onCancel }) => {
                     <h2 className="text-center text-4xl font-black text-gray-900 mt-1">Rs. {amount}</h2>
 
                     {step === 1 ? (
-                        /* Step 1: Select App */
+                        
                         <div className="mt-8 space-y-3">
                             <p className="text-[10px] font-black uppercase text-gray-400 mb-4">Select UPI App</p>
                             <button onClick={() => setStep(2)} className="w-full border p-3 flex items-center gap-4 hover:border-black transition-all">
@@ -44,7 +44,7 @@ const UPIPaymentModal = ({ amount, onSucess, onCancel }) => {
                             </button>
                         </div>
                     ) : (
-                        /* Step 2: QR Code Simulation */
+                        /* QR Code  */
                         <div className="mt-8 text-center">
                             <div className="w-40 h-40 bg-gray-100 mx-auto mb-4 flex items-center justify-center border-2 border-dashed border-gray-300">
                                 <span className="text-[10px] font-black text-gray-300 uppercase">QR CODE DUMMY</span>

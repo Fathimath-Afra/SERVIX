@@ -8,7 +8,7 @@ export const fetchSocietyIssues = createAsyncThunk(
         try {
             const { search = "", status = "all", page = 1 } = params;
             const response = await API.get(`/issues/society?search=${search}&status=${status}&page=${page}`);
-            return response.data; // returns { issues, totalPages, ... }
+            return response.data; //  { issues, totalPages, ... }
         } catch (err) {
             return rejectWithValue(err.response.data);
         }
@@ -105,7 +105,7 @@ const issueSlice = createSlice({
     totalPages: 0
   },
   reducers: {
-    //  add local reducers here later for things like filtering
+   
   },
   extraReducers: (builder) => {
     builder
@@ -124,7 +124,7 @@ const issueSlice = createSlice({
       .addCase(assignWorkerAction.fulfilled, (state, action) => {
         const index = state.items.findIndex(item => item._id === action.payload._id);
         if (index !== -1) {
-            state.items[index] = action.payload; // Update the specific issue in the list
+            state.items[index] = action.payload; // Updating the that one issue in the list
         }
       })
      

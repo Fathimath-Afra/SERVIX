@@ -27,7 +27,7 @@ const { Server } = require('socket.io');
 
 
 app.use(cors({
-    origin: ["http://localhost:5173","http://localhost:5174", /\.vercel\.app$/], // This allows any vercel domain
+    origin: ["http://localhost:5173","http://localhost:5174", /\.vercel\.app$/], //  any vercel domain
     credentials: true
 }));
 
@@ -45,7 +45,7 @@ const io = new Server(server, {
 
 app.set('socketio', io);
 
-// Connection Logic
+// Connection 
 io.on('connection', (socket) => {
     console.log('⚡ New Connection:', socket.id);
 
@@ -61,7 +61,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('send_location', (data) => {
-    // Ensure data looks like: { lat, lng, citizenId, issueId, workerName }
+    // { lat, lng, citizenId, issueId, workerName }
     io.to(String(data.citizenId)).emit('worker_moving', data);
     });
 });

@@ -4,7 +4,7 @@ import L from 'leaflet';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
-// Standard Leaflet Icon fix
+// Standard Leaflet Icon 
 let DefaultIcon = L.icon({
     iconUrl: markerIcon,
     shadowUrl: markerShadow,
@@ -13,7 +13,6 @@ let DefaultIcon = L.icon({
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
-// "slides" the map to the new worker position
 function AutoPan({ lat, lng }) {
     const map = useMap();
     useEffect(() => {
@@ -52,3 +51,6 @@ const LiveTrackingMap = ({ lat, lng, name }) => {
 };
 
 export default LiveTrackingMap;
+
+// Whenever the coordinates update, a custom AutoPan component uses the Leaflet map instance to smoothly move the map center using panTo.
+//  A marker is rendered at the worker's latest position with a popup displaying their name, enabling real-time worker tracking.

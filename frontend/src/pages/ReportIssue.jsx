@@ -135,7 +135,7 @@ const ReportIssue = () => {
                 <textarea placeholder="Description" value={description} onChange={(e)=>setDescription(e.target.value)} required
                     className="w-full p-3 border rounded-xl h-24" />
 
-                 {/* 📍 ADDRESS SEARCH */}
+                
                 <div className="p-4 bg-gray-50 border border-gray-200">
                     <label className="block text-[10px] font-black uppercase text-gray-400 mb-2">Issue Location (Address)</label>
                     <div className="flex gap-2">
@@ -165,7 +165,7 @@ const ReportIssue = () => {
                     <input type="file" multiple accept="image/*" onChange={handleImageChange} 
                         className="text-[10px] text-gray-500 block w-full file:mr-4 file:py-2 file:px-4 file:border-0 file:bg-gray-100 file:text-gray-700 file:font-bold file:uppercase hover:file:bg-gray-200 cursor-pointer" />
                     
-                    {/* PREVIEW GRID */}
+                    {/* PREVIEW GRID -- to see image shorter preview*/}
                     <div className="grid grid-cols-5 gap-2 mt-4">
                         {previews.map((url, index) => (
                             <div key={index} className="relative aspect-square border border-gray-100 overflow-hidden">

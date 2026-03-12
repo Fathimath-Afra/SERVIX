@@ -42,7 +42,7 @@ const AdminDashboard = () => {
 
             if (response.status === 200) {
                 setUsers((prevUsers) => prevUsers.filter(u => u._id !== id));
-                
+                // console.log(users);
                 successAlert("Removed!", "User has been deleted from the platform.");
             }
         } catch (err) {

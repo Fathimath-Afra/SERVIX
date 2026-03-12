@@ -13,13 +13,13 @@ let DefaultIcon = L.icon({
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
-// 🆕 Helper component to move the map when data arrives
+
 function RecenterMap({ tasks }) {
     const map = useMap();
     const [hasCentered, setHasCentered] = useState(false);
 
     useEffect(() => {
-        // 🚀 Only center if we have tasks and we HAVEN'T centered yet
+        
         if (tasks.length > 0 && !hasCentered) {
             const { lat, lng } = tasks[0].location;
             map.setView([lat, lng], 13);

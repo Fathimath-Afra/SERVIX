@@ -6,6 +6,7 @@ const Navbar = () => {
     const { user, logout, isAuthenticated } = useContext(AuthContext);
     const navigate = useNavigate();
 
+    // console.log(user);
     const handleLogout = () => {
         logout();
         navigate('/login');
@@ -21,7 +22,7 @@ const Navbar = () => {
                     SERVIX
                 </Link>
                 
-                {/* ROLE-BASED LINKS */}
+               
                 <div className="flex gap-6 text-[10px] font-black uppercase tracking-widest text-gray-400">
                     
                     {/* Common link  */}
@@ -47,12 +48,12 @@ const Navbar = () => {
                         </>
                     )}
 
-                    {/* Dedicated link for the Profile page */}
+                    
                     <Link to="/profile" className="hover:text-blue-600 transition-colors">Profile</Link>
                 </div>
             </div>
 
-            {/* RIGHT SIDE: ROLE TAG & LOGOUT */}
+            {/*  ROLE TAG & LOGOUT */}
             <div className="flex items-center gap-6">
                 <div className="flex flex-col items-end">
                     <span className="text-[9px] font-black text-blue-600 uppercase tracking-tighter bg-blue-50 px-2 py-0.5 rounded">

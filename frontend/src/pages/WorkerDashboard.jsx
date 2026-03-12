@@ -246,7 +246,7 @@ const WorkerDashboard = () => {
                     </div>
                 ))}
 
-                {/* Empty State */}
+               
                 {(view === 'active' ? activeTasks : completedTasks).length === 0 && (
                     <div className="col-span-full py-20 text-center text-gray-300 text-[10px] font-black uppercase tracking-[0.2em]">
                         No records found in this section

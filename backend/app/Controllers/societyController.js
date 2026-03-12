@@ -16,7 +16,7 @@ societyCltr.create = async (req, res) => {
             name,
             address,
             city,
-            createdBy: req.userId // From authenticateUser middleware
+            createdBy: req.userId 
         });
         await society.save();
         res.status(201).json(society);
