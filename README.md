@@ -4,6 +4,9 @@ SERVIX is a **full-stack MERN application** designed to bridge the operational g
 It integrates **AI-powered issue triage, real-time WebSocket communication, and a secure financial settlement system** to streamline maintenance workflows.
 
 ---
+backend - https://servix-backend-tzs5.onrender.com
+live url - https://servix-frontend-o4efvun76-fathimath-afras-projects.vercel.app/
+
 
 # 🚀 Key Features
 
