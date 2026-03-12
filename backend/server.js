@@ -69,7 +69,7 @@ io.on('connection', (socket) => {
 app.post('/api/register',userCltr.register);
 app.post('/api/login',userCltr.login);
 app.get('/api/users/profile',authenticateUser,userCltr.getProfile);
-app.delete('/api/:id', authenticateUser, userCltr.remove);
+app.delete('/api/users/:id', authenticateUser,authorizeUser(['admin']), userCltr.remove);
 
 
 app.post('/api/societies', authenticateUser, authorizeUser(['admin']), societyCltr.create);

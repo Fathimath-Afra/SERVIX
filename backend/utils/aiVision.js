@@ -12,7 +12,7 @@ const analyzeImageWithAI = async (imageBuffer, mimeType) => {
                     text: `Act as a society maintenance assistant. Look at this photo and return ONLY a JSON object with:
                     {
                       "title": "A short 3-word title",
-                      "category": "water" OR "electricity" OR "plumbing" OR "waste" OR "other",
+                      "category": "water" OR "electricity" OR "plumbing" OR "waste" OR "cleaning" or "other",
                       "description": "A professional 1-sentence technical description"
                     }` 
                 },

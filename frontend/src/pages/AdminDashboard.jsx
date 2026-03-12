@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import API from '../api/axios';
 import { deleteConfirm, successAlert } from '../utils/alert';
+import Swal from "sweetalert2";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
 const AdminDashboard = () => {
@@ -32,12 +33,23 @@ const AdminDashboard = () => {
     }, []);
 
     const handleDeleteUser = async (id) => {
-        const result = await deleteConfirm("Remove User?");
-        if (result.isConfirmed) {
-            await API.delete(`/users/${id}`);
-            setUsers(users.filter(u => u._id !== id));
-            successAlert("Removed");
+         const result = await deleteConfirm("Remove User?", "This action cannot be undone.");
+    
+    if (result.isConfirmed) {
+        try {
+            
+            const response = await API.delete(`/users/${id}`);
+
+            if (response.status === 200) {
+                setUsers((prevUsers) => prevUsers.filter(u => u._id !== id));
+                
+                successAlert("Removed!", "User has been deleted from the platform.");
+            }
+        } catch (err) {
+            console.error("Delete failed:", err);
+            Swal.fire("Error", "Could not delete user. They might have active dependencies.", "error");
         }
+    }
     };
 
     const chartData = [
